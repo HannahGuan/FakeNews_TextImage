@@ -1,4 +1,4 @@
-# FakeNews_TextImage
+# Fake News Detection with Text-Image Mismatch Score
 
 **The final project of Stanford CS230 courses (https://cs230.stanford.edu).**
 
