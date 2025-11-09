@@ -9,9 +9,11 @@ The objective of this project is to design and evaluate a neural network model t
 
 -----
 
-**Train data images: https://drive.google.com/file/d/1EaSgAheEGBHWQsysokz-Pw6-k9NQUaHr/view?usp=share_link. Mapped via the 'id' column in the csv file.**
-
 **Orginal Data github repo: https://github.com/entitize/Fakeddit**
+
+Train data images: https://drive.google.com/file/d/1EaSgAheEGBHWQsysokz-Pw6-k9NQUaHr/view?usp=share_link. Mapped via the 'id' column in the csv file.
+
+Dev data images: https://drive.google.com/file/d/1FSvK1CPIt6CqUXR-g4ndp7TbPUazXwpR/view?usp=share_link
 
 Label Structure:
 - [2-way] 0 True; 1 False
