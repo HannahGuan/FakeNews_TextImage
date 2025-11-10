@@ -1,0 +1,10 @@
+__pycache__/dataProcess_util.cpython-311.pyc
+fakeddit/multimodal_test_public.tsv
+fakeddit/multimodal_train.tsv
+fakeddit/multimodal_validate.tsv
+train_images/
+dev_images/
+dev_images.zip
+train_images.zip
+.DS_Store
+.DS_Store
