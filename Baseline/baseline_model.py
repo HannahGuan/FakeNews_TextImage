@@ -3,7 +3,7 @@ Baseline Multimodal Model: BERT + ResNet-50 Concatenation
 Binary classification combining text and image features.
 
 Author: Xinru Pan
-Time: 2025-11-08
+Time: 2025-11-27
 """
 
 import torch
@@ -27,24 +27,27 @@ ssl_context = ssl.create_default_context(cafile=certifi.where())
 class MultiModalDataset(Dataset):
     """loading text and image pairs with labels."""
 
-    def __init__(self, csv_path: str, tokenizer, image_transform, max_length: int = 128):
+    def __init__(self, csv_path: str, tokenizer, image_transform, max_length: int = 128, label_type: str = '2_way'):
         """
         Args:
             csv_path: Path to CSV file
             tokenizer: BERT tokenizer
             image_transform: Image preprocessing transforms
             max_length: Maximum sequence length for BERT
+            label_type: Type of label to use ('2_way', '3_way', or '6_way')
         """
         self.data = pd.read_csv(csv_path)
         self.tokenizer = tokenizer
         self.image_transform = image_transform
         self.max_length = max_length
+        self.label_type = label_type
 
         #filter out rows with missing images or text
         self.data = self.data[self.data['hasImage'] == True].reset_index(drop=True)
-        self.data = self.data.dropna(subset=['title', 'image_url', '2_way_label']).reset_index(drop=True)
+        label_column = f'{label_type}_label'
+        self.data = self.data.dropna(subset=['title', 'image_url', label_column]).reset_index(drop=True)
 
-        print(f"Loaded {len(self.data)} samples from {csv_path}")
+        print(f"Loaded {len(self.data)} samples from {csv_path} with {label_type} labels")
 
     def __len__(self):
         return len(self.data)
@@ -80,27 +83,30 @@ class MultiModalDataset(Dataset):
             #create a dummy image in case of error
             image = torch.zeros(3, 224, 224)
 
-        #we use 2_way_label for now; will try 3_way and 6_way later
-        label = float(row['2_way_label'])
+        # get label based on label_type
+        label_column = f'{self.label_type}_label'
+        label = int(row[label_column])
 
         return {
             'input_ids': input_ids,
             'attention_mask': attention_mask,
             'image': image,
-            'label': torch.tensor(label, dtype=torch.float32)
+            'label': torch.tensor(label, dtype=torch.long)  # long for CrossEntropyLoss
         }
 
 
 class MultiModalClassifier(nn.Module):
     """Baseline model: BERT + ResNet-50 with MLP classifier."""
 
-    def __init__(self, hidden_dim: int = 512, dropout: float = 0.3):
+    def __init__(self, num_classes: int = 2, hidden_dim: int = 512, dropout: float = 0.3):
         """
         Args:
+            num_classes: Number of output classes (2, 3, or 6)
             hidden_dim: Hidden dimension for MLP
             dropout: Dropout probability
         """
         super(MultiModalClassifier, self).__init__()
+        self.num_classes = num_classes
 
         # text encoder: BERT
         self.bert = BertModel.from_pretrained('bert-base-uncased')
@@ -124,13 +130,16 @@ class MultiModalClassifier(nn.Module):
         for param in self.resnet.parameters():
             param.requires_grad = False
 
-        # MLP Classifier
-        concat_dim = self.bert_dim + self.resnet_dim  
+        # MLP Classifier with 2 ReLU layers
+        concat_dim = self.bert_dim + self.resnet_dim
         self.classifier = nn.Sequential(
             nn.Linear(concat_dim, hidden_dim),
             nn.ReLU(),
             nn.Dropout(dropout),
-            nn.Linear(hidden_dim, 1)  # single logit for binary classification
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(hidden_dim, num_classes)  # output logits for each class
         )
 
     def forward(self, input_ids, attention_mask, image):
@@ -141,7 +150,7 @@ class MultiModalClassifier(nn.Module):
             image: [batch_size, 3, 224, 224]
 
         Returns:
-            logits: [batch_size, 1]
+            logits: [batch_size, num_classes]
         """
         # extract text features (CLS token embedding)
         bert_output = self.bert(input_ids=input_ids, attention_mask=attention_mask)
@@ -176,9 +185,9 @@ def train_epoch(model, dataloader, criterion, optimizer, device):
 
         # forward pass
         optimizer.zero_grad()
-        logits = model(input_ids, attention_mask, images).squeeze(1)
+        logits = model(input_ids, attention_mask, images)
 
-        # compute loss
+        # compute loss (CrossEntropyLoss expects raw logits)
         loss = criterion(logits, labels)
 
         # backward pass
@@ -186,11 +195,10 @@ def train_epoch(model, dataloader, criterion, optimizer, device):
         optimizer.step()
 
         # calculate accuracy
-        predictions = (torch.sigmoid(logits) > 0.5).float()
+        predictions = torch.argmax(logits, dim=1)
         correct += (predictions == labels).sum().item()
         total += labels.size(0)
         total_loss += loss.item()
-
 
     avg_loss = total_loss / len(dataloader)
     accuracy = 100 * correct / total
@@ -214,13 +222,13 @@ def evaluate(model, dataloader, criterion, device):
             labels = batch['label'].to(device)
 
             # forward pass
-            logits = model(input_ids, attention_mask, images).squeeze(1)
+            logits = model(input_ids, attention_mask, images)
 
-            # compute loss
+            # compute loss (CrossEntropyLoss expects raw logits)
             loss = criterion(logits, labels)
 
             # calculate accuracy
-            predictions = (torch.sigmoid(logits) > 0.5).float()
+            predictions = torch.argmax(logits, dim=1)
             correct += (predictions == labels).sum().item()
             total += labels.size(0)
             total_loss += loss.item()
@@ -233,16 +241,21 @@ def evaluate(model, dataloader, criterion, device):
 
 def main():
     # Hyperparameters
-    BATCH_SIZE = 16
-    NUM_EPOCHS = 5
-    LEARNING_RATE = 1e-3
+    BATCH_SIZE = 8
+    NUM_EPOCHS = 10
+    LEARNING_RATE = 5e-4
     HIDDEN_DIM = 512
     DROPOUT = 0.3
     MAX_LENGTH = 128
+    LABEL_TYPE = '2_way'  # Options: '2_way', '3_way', '6_way'
+
+    # Set number of classes based on label type
+    NUM_CLASSES = {'2_way': 2, '3_way': 3, '6_way': 6}[LABEL_TYPE]
 
     # device
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f"Using device: {device}")
+    print(f"Label type: {LABEL_TYPE} ({NUM_CLASSES} classes)")
 
     # initialize tokenizer
     tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
@@ -260,14 +273,16 @@ def main():
         'train_sampled_with_images.csv',
         tokenizer,
         image_transform,
-        max_length=MAX_LENGTH
+        max_length=MAX_LENGTH,
+        label_type=LABEL_TYPE
     )
 
     dev_dataset = MultiModalDataset(
         'dev_sampled_with_images.csv',
         tokenizer,
         image_transform,
-        max_length=MAX_LENGTH
+        max_length=MAX_LENGTH,
+        label_type=LABEL_TYPE
     )
 
     # create dataloaders
@@ -288,11 +303,11 @@ def main():
     )
 
     # initialize model
-    model = MultiModalClassifier(hidden_dim=HIDDEN_DIM, dropout=DROPOUT)
+    model = MultiModalClassifier(num_classes=NUM_CLASSES, hidden_dim=HIDDEN_DIM, dropout=DROPOUT)
     model = model.to(device)
 
     # loss function and optimizer
-    criterion = nn.BCEWithLogitsLoss()
+    criterion = nn.CrossEntropyLoss()
     # only optimize MLP classifier parameters (BERT and ResNet are frozen)
     optimizer = torch.optim.Adam(model.classifier.parameters(), lr=LEARNING_RATE)
 
