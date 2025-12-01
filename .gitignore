@@ -8,3 +8,4 @@ dev_images.zip
 train_images.zip
 .DS_Store
 .DS_Store
+*.pth
