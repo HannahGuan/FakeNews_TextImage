@@ -43,6 +43,8 @@ class FakeNewsClassifier(nn.Module):
         layers.append(nn.Linear(prev, config.classifier.num_classes))
         self.classifier = nn.Sequential(*layers)
 
+        # Note: dtype handled by AMP (Automatic Mixed Precision) in training
+
 
     def forward(self, images, texts):
         """

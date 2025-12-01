@@ -19,10 +19,11 @@ ImageFile.LOAD_TRUNCATED_IMAGES = True
 class FakeNewsDataset(Dataset):
     """Dataset that loads PIL images and raw text for BLIP-2"""
 
-    def __init__(self, df: pd.DataFrame, data_config: DataConfig):
+    def __init__(self, df: pd.DataFrame, data_config: DataConfig, image_dir: str):
         self.df = df.reset_index(drop=True)
         self.config = data_config
         self.data_root = Path(self.config.data_dir)
+        self.image_dir = image_dir  # e.g., "train_images" or "dev_images"
 
     def __len__(self):
         return len(self.df)
@@ -30,13 +31,14 @@ class FakeNewsDataset(Dataset):
     def __getitem__(self, idx):
         row = self.df.iloc[idx]
 
-        # load image
-        rel_path = str(row[self.config.image_column])
-        image_path = self.data_root / rel_path
+        # load image using id column: Data/{image_dir}/{id}.jpg
+        image_id = str(row[self.config.id_column])
+        image_path = self.data_root / self.image_dir / f"{image_id}.jpg"
         try:
             image = Image.open(image_path).convert("RGB")
-        except Exception:
+        except Exception as e:
             # fallback to a blank white image
+            print(f"Warning: Could not load image {image_path}: {e}")
             image = Image.new("RGB", (224, 224), color="white")
 
         # text & label
@@ -60,10 +62,10 @@ def create_dataloaders(config: Config, processor) -> tuple[DataLoader, DataLoade
     )
     print(f"[DATA] Train: {len(train_df)}, Val: {len(val_df)}, Test: {len(test_df)}")
 
-    # datasets
-    train_dataset = FakeNewsDataset(train_df, config.data)
-    val_dataset = FakeNewsDataset(val_df, config.data)
-    test_dataset = FakeNewsDataset(test_df, config.data)
+    # datasets with appropriate image directories
+    train_dataset = FakeNewsDataset(train_df, config.data, config.data.train_image_dir)
+    val_dataset = FakeNewsDataset(val_df, config.data, config.data.val_image_dir)
+    test_dataset = FakeNewsDataset(test_df, config.data, config.data.val_image_dir)
 
     # collate -> lists for BLIP-2, tensor for labels
     def collate_fn(batch):
@@ -117,6 +119,12 @@ class Trainer:
         self.scheduler = CosineAnnealingLR(self.optimizer, T_max=config.training.num_epochs) \
             if config.training.use_scheduler else None
 
+        # Automatic Mixed Precision for stable float16 training
+        self.use_amp = (config.model.dtype == "float16" and config.model.device == "cuda")
+        if self.use_amp:
+            self.scaler = torch.cuda.amp.GradScaler()
+            print("[TRAINER] Using Automatic Mixed Precision (AMP)")
+
         self.best_val_loss = float("inf")
         self.patience_counter = 0
         self.train_losses: list[float] = []
@@ -137,13 +145,26 @@ class Trainer:
             texts = batch["texts"]
             labels = batch["labels"].to(self.device)
 
-            logits = self.model(images, texts)
-            loss = self.criterion(logits, labels)
-
             self.optimizer.zero_grad()
-            loss.backward()
-            nn.utils.clip_grad_norm_(self.model.parameters(), self.config.training.max_grad_norm)
-            self.optimizer.step()
+
+            # Use AMP if enabled
+            if self.use_amp:
+                with torch.cuda.amp.autocast():
+                    logits = self.model(images, texts)
+                    loss = self.criterion(logits, labels)
+
+                self.scaler.scale(loss).backward()
+                self.scaler.unscale_(self.optimizer)
+                nn.utils.clip_grad_norm_(self.model.parameters(), self.config.training.max_grad_norm)
+                self.scaler.step(self.optimizer)
+                self.scaler.update()
+            else:
+                logits = self.model(images, texts)
+                loss = self.criterion(logits, labels)
+
+                loss.backward()
+                nn.utils.clip_grad_norm_(self.model.parameters(), self.config.training.max_grad_norm)
+                self.optimizer.step()
 
             total_loss += loss.item()
             _, pred = logits.max(1)
@@ -165,8 +186,14 @@ class Trainer:
                 texts = batch["texts"]
                 labels = batch["labels"].to(self.device)
 
-                logits = self.model(images, texts)
-                loss = self.criterion(logits, labels)
+                # Use AMP if enabled
+                if self.use_amp:
+                    with torch.cuda.amp.autocast():
+                        logits = self.model(images, texts)
+                        loss = self.criterion(logits, labels)
+                else:
+                    logits = self.model(images, texts)
+                    loss = self.criterion(logits, labels)
 
                 total_loss += loss.item()
                 _, pred = logits.max(1)

@@ -44,12 +44,14 @@ class ModelConfig:
 class DataConfig:
     """Data Configuration"""
     # dataset paths
-    data_dir: Path = Path("./data/fakeddit")
-    train_csv: str = "train.csv"
-    val_csv: str = "val.csv"
+    data_dir: Path = Path("../Data")  # relative to BLIP_model directory
+    train_csv: str = "train_sampled_with_images.csv"
+    val_csv: str = "dev_sampled_with_images.csv"
+    train_image_dir: str = "train_images"
+    val_image_dir: str = "dev_images"
 
     # column names
-    image_column: str = "image_path"
+    id_column: str = "id"  # column containing image ID
     text_column: str = "clean_title"
     label_column: str = "2_way_label"  # can be "2_way_label", "3_way_label", or "6_way_label"
     

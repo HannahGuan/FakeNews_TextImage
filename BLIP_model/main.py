@@ -79,6 +79,12 @@ def main(args):
             checkpoint = torch.load(ckpt_path, map_location=config.model.device, weights_only=False)
             model.load_state_dict(checkpoint["model_state_dict"])
             print("[LOAD] Checkpoint loaded successfully")
+
+            # Ensure model dtype matches config
+            if config.model.dtype == "float16" and config.model.device == "cuda":
+                print("[EVAL] Converting classifier to float16 for evaluation")
+                model.classifier = model.classifier.half()
+
         else:
             print(f"[WARNING] No checkpoint found at {ckpt_path}")
             print("[WARNING] Using untrained model")

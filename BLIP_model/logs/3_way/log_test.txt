@@ -1,0 +1,35 @@
+======================================================================
+EVALUATION RESULTS
+======================================================================
+ACCURACY: 0.8052
+PRECISION: 0.7863
+RECALL: 0.8052
+F1: 0.7956
+AVERAGE_CONFIDENCE: 0.7715
+AVERAGE_ENTROPY: 0.5508
+
+Classification Report:
+                   precision    recall  f1-score   support
+
+             Real       0.75      0.77      0.76       148
+ Fake (True Text)       0.00      0.00      0.00         9
+Fake (False Text)       0.84      0.86      0.85       228
+
+         accuracy                           0.81       385
+        macro avg       0.53      0.54      0.54       385
+     weighted avg       0.79      0.81      0.80       385
+
+[SAVE] Metrics saved to logs\3_way\metrics_3_way.json
+[SAVE] Confusion matrix data saved to logs\3_way\confusion_matrix_3_way.json
+
+[SAVE] Confusion matrix saved to logs\3_way\confusion_matrix_3_way.png
+[SAVE] ROC data saved to logs\3_way\roc_data_3_way.json
+[SAVE] ROC curves saved to logs\3_way\roc_curve_3_way.png
+[SAVE] Precision-Recall data saved to logs\3_way\pr_data_3_way.json
+[SAVE] Precision-Recall curves saved to logs\3_way\pr_curve_3_way.png
+
+[SAVE] Predictions (JSON) saved to logs\3_way\predictions.json
+
+======================================================================
+Done
+======================================================================

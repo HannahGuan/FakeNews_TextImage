@@ -1,0 +1,39 @@
+
+======================================================================
+EVALUATION RESULTS
+======================================================================
+ACCURACY: 0.6364
+PRECISION: 0.6253
+RECALL: 0.6364
+F1: 0.5215
+AVERAGE_CONFIDENCE: 0.6143
+AVERAGE_ENTROPY: 1.1035
+
+Classification Report:
+                  precision    recall  f1-score   support
+
+            Real       0.64      0.93      0.76       148
+   Satire/Parody       0.00      0.00      0.00        25
+      Misleading       1.00      0.01      0.03        73
+        Imposter       0.00      0.00      0.00         8
+False Connection       0.63      0.91      0.75       116
+     Manipulated       0.00      0.00      0.00        15
+
+        accuracy                           0.64       385
+       macro avg       0.38      0.31      0.26       385
+    weighted avg       0.63      0.64      0.52       385
+
+[SAVE] Metrics saved to logs\6_way\metrics_6_way.json
+[SAVE] Confusion matrix data saved to logs\6_way\confusion_matrix_6_way.json
+
+[SAVE] Confusion matrix saved to logs\6_way\confusion_matrix_6_way.png
+[SAVE] ROC data saved to logs\6_way\roc_data_6_way.json
+[SAVE] ROC curves saved to logs\6_way\roc_curve_6_way.png
+[SAVE] Precision-Recall data saved to logs\6_way\pr_data_6_way.json
+[SAVE] Precision-Recall curves saved to logs\6_way\pr_curve_6_way.png
+
+[SAVE] Predictions (JSON) saved to logs\6_way\predictions.json
+
+======================================================================
+Done
+======================================================================

@@ -1,0 +1,9 @@
+{
+  "accuracy": 0.6363636363636364,
+  "precision": 0.6253209303459034,
+  "recall": 0.6363636363636364,
+  "f1": 0.5215138395892546,
+  "roc_auc": null,
+  "average_confidence": 0.6142578125,
+  "average_entropy": 1.103515625
+}

@@ -20,6 +20,10 @@ import os
 import ssl
 import certifi
 from typing import Tuple, Dict
+from pathlib import Path
+import matplotlib.pyplot as plt
+import argparse
+from sklearn.model_selection import train_test_split
 
 ssl_context = ssl.create_default_context(cafile=certifi.where())
 
@@ -27,16 +31,18 @@ ssl_context = ssl.create_default_context(cafile=certifi.where())
 class MultiModalDataset(Dataset):
     """loading text and image pairs with labels."""
 
-    def __init__(self, csv_path: str, tokenizer, image_transform, max_length: int = 128, label_type: str = '2_way'):
+    def __init__(self, csv_path: str, image_dir: str, tokenizer, image_transform, max_length: int = 128, label_type: str = '2_way'):
         """
         Args:
             csv_path: Path to CSV file
+            image_dir: Path to image directory
             tokenizer: BERT tokenizer
             image_transform: Image preprocessing transforms
             max_length: Maximum sequence length for BERT
             label_type: Type of label to use ('2_way', '3_way', or '6_way')
         """
         self.data = pd.read_csv(csv_path)
+        self.image_dir = Path(image_dir)
         self.tokenizer = tokenizer
         self.image_transform = image_transform
         self.max_length = max_length
@@ -45,7 +51,7 @@ class MultiModalDataset(Dataset):
         #filter out rows with missing images or text
         self.data = self.data[self.data['hasImage'] == True].reset_index(drop=True)
         label_column = f'{label_type}_label'
-        self.data = self.data.dropna(subset=['title', 'image_url', label_column]).reset_index(drop=True)
+        self.data = self.data.dropna(subset=['clean_title', 'id', label_column]).reset_index(drop=True)
 
         print(f"Loaded {len(self.data)} samples from {csv_path} with {label_type} labels")
 
@@ -56,7 +62,7 @@ class MultiModalDataset(Dataset):
         row = self.data.iloc[idx]
 
         #process text
-        title = str(row['title'])
+        title = str(row['clean_title'])
         encoded = self.tokenizer(
             title,
             max_length=self.max_length,
@@ -67,19 +73,14 @@ class MultiModalDataset(Dataset):
         input_ids = encoded['input_ids'].squeeze(0)
         attention_mask = encoded['attention_mask'].squeeze(0)
 
-        #process image
-        image_path = str(row['image_url'])
+        #process image using id column
+        image_id = str(row['id'])
+        image_path = self.image_dir / f"{image_id}.jpg"
         try:
-            #handle both local paths and URLs
-            if os.path.exists(image_path):
-                image = Image.open(image_path).convert('RGB')
-            else:
-                #create a dummy image if path doesn't exist
-                image = Image.new('RGB', (224, 224), color='black')
-
+            image = Image.open(image_path).convert('RGB')
             image = self.image_transform(image)
         except Exception as e:
-            print(f"Error loading image at index {idx}: {e}")
+            print(f"Warning: Could not load image {image_path}: {e}")
             #create a dummy image in case of error
             image = torch.zeros(3, 224, 224)
 
@@ -239,23 +240,64 @@ def evaluate(model, dataloader, criterion, device):
     return avg_loss, accuracy
 
 
-def main():
+def plot_training_history(train_losses, train_accs, val_losses, val_accs, log_dir, label_type):
+    """Plot and save training history."""
+    plt.figure(figsize=(14, 5))
+
+    # loss plot
+    plt.subplot(1, 3, 1)
+    plt.plot(train_losses, label="Train Loss", marker='o')
+    plt.plot(val_losses, label="Val Loss", marker='s')
+    plt.xlabel("Epoch")
+    plt.ylabel("Loss")
+    plt.legend()
+    plt.title("Training and Validation Loss")
+    plt.grid(True, alpha=0.3)
+
+    # accuracy plot
+    plt.subplot(1, 3, 2)
+    plt.plot(train_accs, label="Train Accuracy", marker='o')
+    plt.plot(val_accs, label="Val Accuracy", marker='s')
+    plt.xlabel("Epoch")
+    plt.ylabel("Accuracy (%)")
+    plt.legend()
+    plt.title("Training and Validation Accuracy")
+    plt.grid(True, alpha=0.3)
+
+    # val accuracy zoom
+    plt.subplot(1, 3, 3)
+    plt.plot(val_accs, label="Val Accuracy", marker='s', color='orange')
+    plt.xlabel("Epoch")
+    plt.ylabel("Accuracy (%)")
+    plt.legend()
+    plt.title("Validation Accuracy (Detail)")
+    plt.grid(True, alpha=0.3)
+
+    plt.tight_layout()
+    save_path = log_dir / f"training_history_{label_type}.png"
+    plt.savefig(save_path, dpi=300, bbox_inches='tight')
+    print(f"[SAVE] Training history saved to {save_path}")
+    plt.close()
+
+
+def main(args):
     # Hyperparameters
-    BATCH_SIZE = 8
-    NUM_EPOCHS = 10
-    LEARNING_RATE = 5e-4
+    BATCH_SIZE = args.batch_size
+    NUM_EPOCHS = args.epochs
+    LEARNING_RATE = args.lr
     HIDDEN_DIM = 512
     DROPOUT = 0.3
     MAX_LENGTH = 128
-    LABEL_TYPE = '2_way'  # Options: '2_way', '3_way', '6_way'
+    LABEL_TYPE = args.classification_type
 
     # Set number of classes based on label type
     NUM_CLASSES = {'2_way': 2, '3_way': 3, '6_way': 6}[LABEL_TYPE]
 
     # device
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = torch.device('cuda' if torch.cuda.is_available() and not args.force_cpu else 'cpu')
     print(f"Using device: {device}")
     print(f"Label type: {LABEL_TYPE} ({NUM_CLASSES} classes)")
+    print(f"Batch size: {BATCH_SIZE}, Epochs: {NUM_EPOCHS}, Learning rate: {LEARNING_RATE}")
 
     # initialize tokenizer
     tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
@@ -268,22 +310,53 @@ def main():
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     ])
 
+    # load and split dev into val/test (same as BLIP model)
+    dev_df = pd.read_csv('../Data/dev_sampled_with_images.csv')
+    label_column = f'{LABEL_TYPE}_label'
+    val_df, test_df = train_test_split(
+        dev_df,
+        test_size=0.2,  # 20% for test, 80% for validation
+        random_state=42,
+        stratify=dev_df[label_column]
+    )
+
+    # save split CSVs for later use
+    val_csv_path = f'../Data/val_split_{LABEL_TYPE}.csv'
+    test_csv_path = f'../Data/test_split_{LABEL_TYPE}.csv'
+    val_df.to_csv(val_csv_path, index=False)
+    test_df.to_csv(test_csv_path, index=False)
+    print(f"[DATA] Val split saved to {val_csv_path}")
+    print(f"[DATA] Test split saved to {test_csv_path}")
+
     # create datasets
     train_dataset = MultiModalDataset(
-        'train_sampled_with_images.csv',
+        '../Data/train_sampled_with_images.csv',
+        '../Data/train_images',
         tokenizer,
         image_transform,
         max_length=MAX_LENGTH,
         label_type=LABEL_TYPE
     )
 
-    dev_dataset = MultiModalDataset(
-        'dev_sampled_with_images.csv',
+    val_dataset = MultiModalDataset(
+        val_csv_path,
+        '../Data/dev_images',
         tokenizer,
         image_transform,
         max_length=MAX_LENGTH,
         label_type=LABEL_TYPE
     )
+
+    test_dataset = MultiModalDataset(
+        test_csv_path,
+        '../Data/dev_images',
+        tokenizer,
+        image_transform,
+        max_length=MAX_LENGTH,
+        label_type=LABEL_TYPE
+    )
+
+    print(f"[DATA] Train: {len(train_dataset)}, Val: {len(val_dataset)}, Test: {len(test_dataset)}")
 
     # create dataloaders
     train_loader = DataLoader(
@@ -294,8 +367,16 @@ def main():
         pin_memory=True if torch.cuda.is_available() else False
     )
 
-    dev_loader = DataLoader(
-        dev_dataset,
+    val_loader = DataLoader(
+        val_dataset,
+        batch_size=BATCH_SIZE,
+        shuffle=False,
+        num_workers=2,
+        pin_memory=True if torch.cuda.is_available() else False
+    )
+
+    test_loader = DataLoader(
+        test_dataset,
         batch_size=BATCH_SIZE,
         shuffle=False,
         num_workers=2,
@@ -317,33 +398,104 @@ def main():
     print(f"Total parameters: {total_params:,}")
     print(f"Trainable parameters: {trainable_params:,}")
 
+    # create directories for checkpoints and logs
+    checkpoint_dir = Path(f'checkpoints/{LABEL_TYPE}')
+    log_dir = Path(f'logs/{LABEL_TYPE}')
+    checkpoint_dir.mkdir(parents=True, exist_ok=True)
+    log_dir.mkdir(parents=True, exist_ok=True)
+
     # training loop
-    best_dev_acc = 0.0
+    best_val_acc = 0.0
+    train_losses = []
+    train_accs = []
+    val_losses = []
+    val_accs = []
 
     for epoch in range(NUM_EPOCHS):
-        print(f"Epoch {epoch + 1}/{NUM_EPOCHS}")
+        print(f"\nEpoch {epoch + 1}/{NUM_EPOCHS}")
 
         # train
         train_loss, train_acc = train_epoch(model, train_loader, criterion, optimizer, device)
+        train_losses.append(train_loss)
+        train_accs.append(train_acc)
         print(f"Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.2f}%")
 
-        # evaluate
-        dev_loss, dev_acc = evaluate(model, dev_loader, criterion, device)
-        print(f"Dev Loss: {dev_loss:.4f}, Dev Acc: {dev_acc:.2f}%")
+        # evaluate on validation set
+        val_loss, val_acc = evaluate(model, val_loader, criterion, device)
+        val_losses.append(val_loss)
+        val_accs.append(val_acc)
+        print(f"Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.2f}%")
 
-        # save best model
-        if dev_acc > best_dev_acc:
-            best_dev_acc = dev_acc
+        # save best model based on validation accuracy
+        if val_acc > best_val_acc:
+            best_val_acc = val_acc
+            checkpoint_path = checkpoint_dir / 'best_model.pth'
             torch.save({
                 'epoch': epoch,
                 'model_state_dict': model.state_dict(),
                 'optimizer_state_dict': optimizer.state_dict(),
-                'dev_acc': dev_acc,
-            }, 'best_baseline_model.pth')
-            print(f"Saved new best model with dev accuracy: {dev_acc:.2f}%")
+                'val_acc': val_acc,
+                'val_loss': val_loss,
+                'label_type': LABEL_TYPE,
+            }, checkpoint_path)
+            print(f"[SAVE] Checkpoint saved to {checkpoint_path}")
 
-    print(f"Best dev accuracy: {best_dev_acc:.2f}%")
+    print(f"\n{'='*70}")
+    print(f"TRAINING COMPLETE")
+    print(f"{'='*70}")
+    print(f"Best validation accuracy: {best_val_acc:.2f}%")
+
+    # evaluate on test set
+    print(f"\n{'='*70}")
+    print(f"EVALUATING ON TEST SET")
+    print(f"{'='*70}")
+
+    # load best model
+    checkpoint = torch.load(checkpoint_path)
+    model.load_state_dict(checkpoint['model_state_dict'])
+
+    test_loss, test_acc = evaluate(model, test_loader, criterion, device)
+    print(f"Test Loss: {test_loss:.4f}, Test Acc: {test_acc:.2f}%")
+
+    # plot training history
+    plot_training_history(train_losses, train_accs, val_losses, val_accs, log_dir, LABEL_TYPE)
 
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser(
+        description="Baseline Multimodal Fake News Detection (BERT + ResNet-50)",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
+    parser.add_argument(
+        '--classification-type',
+        type=str,
+        default='2_way',
+        choices=['2_way', '3_way', '6_way'],
+        help='Classification type: 2_way, 3_way, or 6_way'
+    )
+    parser.add_argument(
+        '--batch-size',
+        type=int,
+        default=8,
+        help='Batch size for training'
+    )
+    parser.add_argument(
+        '--epochs',
+        type=int,
+        default=10,
+        help='Number of training epochs'
+    )
+    parser.add_argument(
+        '--lr',
+        type=float,
+        default=5e-4,
+        help='Learning rate'
+    )
+    parser.add_argument(
+        '--force-cpu',
+        action='store_true',
+        help='Force CPU usage even if GPU is available'
+    )
+
+    args = parser.parse_args()
+    main(args)

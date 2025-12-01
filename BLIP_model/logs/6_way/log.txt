@@ -1,0 +1,107 @@
+======================================================================
+BLIP-2 FAKE NEWS DETECTION
+======================================================================
+
+[CONFIG] Device: cuda, Dtype: float16
+[CONFIG] Classification: 2_way (2 classes)
+[CONFIG] Classifier output classes: 2
+[CONFIG] Classification: 6_way (6 classes)
+[SEED] Random seed set to 42
+
+[1/4] Initializing BLIP-2...
+[BLIP-2] Loading model: Salesforce/blip2-itm-vit-g
+[BLIP-2] Device: cuda, Dtype: torch.float16
+[BLIP-2] Model loaded and frozen successfully
+
+[2/4] Loading data...
+[DATA] Train: 10735, Val: 1538, Test: 385
+
+[3/4] Building model...
+
+[4/4] Training...
+C:\Users\Hannah\Desktop\FakeNews_TextImage\BLIP_model\train.py:125: FutureWarning: `torch.cuda.amp.GradScaler(args...)` is deprecated. Please use `torch.amp.GradScaler('cuda', args...)` instead.
+  self.scaler = torch.cuda.amp.GradScaler()
+[TRAINER] Using Automatic Mixed Precision (AMP)
+Epoch 1:   0%|                                                                                                                      | 0/1342 [00:00<?, ?it/s]C:\Users\Hannah\Desktop\FakeNews_TextImage\BLIP_model\train.py:152: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast():
+Expanding inputs for image tokens in BLIP-2 should be done in processing. Please follow instruction here (https://gist.github.com/zucchini-nlp/e9f20b054fa322f84ac9311d9ab67042) to update your BLIP-2 model. Using processors without these attributes in the config is deprecated and will throw an error in v4.50.       
+Epoch 1: 100%|██████████████████████████████████████████████████████████████████████████████████| 1342/1342 [10:22<00:00,  2.16it/s, loss=1.1969, acc=40.94%]
+Validating:   0%|                                                                                                                    | 0/193 [00:00<?, ?it/s]C:\Users\Hannah\Desktop\FakeNews_TextImage\BLIP_model\train.py:191: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast():
+Validating: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████| 193/193 [01:28<00:00,  2.18it/s]
+
+Epoch 1/10
+Train Loss: 1.5099 | Train Acc: 40.94%
+Val   Loss: 1.3726 | Val   Acc: 38.75%
+[SAVE] Checkpoint saved to checkpoints\6_way\best_model.pt
+Epoch 2: 100%|██████████████████████████████████████████████████████████████████████████████████| 1342/1342 [10:10<00:00,  2.20it/s, loss=0.8737, acc=58.71%] 
+Validating: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████| 193/193 [01:26<00:00,  2.22it/s] 
+
+Epoch 2/10
+Train Loss: 1.2234 | Train Acc: 58.71%
+Val   Loss: 1.1565 | Val   Acc: 61.51%
+[SAVE] Checkpoint saved to checkpoints\6_way\best_model.pt
+Epoch 3: 100%|██████████████████████████████████████████████████████████████████████████████████| 1342/1342 [10:12<00:00,  2.19it/s, loss=2.0553, acc=65.22%] 
+Validating: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████| 193/193 [01:26<00:00,  2.22it/s] 
+
+Epoch 3/10
+Train Loss: 1.0286 | Train Acc: 65.22%
+Val   Loss: 1.0537 | Val   Acc: 61.77%
+[SAVE] Checkpoint saved to checkpoints\6_way\best_model.pt
+Epoch 4: 100%|██████████████████████████████████████████████████████████████████████████████████| 1342/1342 [10:13<00:00,  2.19it/s, loss=0.7173, acc=66.12%] 
+Validating: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████| 193/193 [01:27<00:00,  2.21it/s] 
+
+Epoch 4/10
+Train Loss: 0.9544 | Train Acc: 66.12%
+Val   Loss: 1.0204 | Val   Acc: 62.42%
+[SAVE] Checkpoint saved to checkpoints\6_way\best_model.pt
+Epoch 5: 100%|██████████████████████████████████████████████████████████████████████████████████| 1342/1342 [10:13<00:00,  2.19it/s, loss=0.7048, acc=66.44%] 
+Validating: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████| 193/193 [01:26<00:00,  2.22it/s] 
+
+Epoch 5/10
+Train Loss: 0.9222 | Train Acc: 66.44%
+Val   Loss: 1.0060 | Val   Acc: 62.61%
+[SAVE] Checkpoint saved to checkpoints\6_way\best_model.pt
+Epoch 6: 100%|██████████████████████████████████████████████████████████████████████████████████| 1342/1342 [10:17<00:00,  2.17it/s, loss=0.9400, acc=66.94%] 
+Validating: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████| 193/193 [01:27<00:00,  2.21it/s] 
+
+Epoch 6/10
+Train Loss: 0.9059 | Train Acc: 66.94%
+Val   Loss: 1.0058 | Val   Acc: 62.48%
+[SAVE] Checkpoint saved to checkpoints\6_way\best_model.pt
+Epoch 7: 100%|██████████████████████████████████████████████████████████████████████████████████| 1342/1342 [10:19<00:00,  2.17it/s, loss=0.7689, acc=67.25%] 
+Validating: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████| 193/193 [01:27<00:00,  2.21it/s] 
+
+Epoch 7/10
+Train Loss: 0.8944 | Train Acc: 67.25%
+Val   Loss: 0.9890 | Val   Acc: 63.20%
+[SAVE] Checkpoint saved to checkpoints\6_way\best_model.pt
+Epoch 8: 100%|██████████████████████████████████████████████████████████████████████████████████| 1342/1342 [10:12<00:00,  2.19it/s, loss=0.6598, acc=67.69%] 
+Validating: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████| 193/193 [01:26<00:00,  2.22it/s] 
+
+Epoch 8/10
+Train Loss: 0.8878 | Train Acc: 67.69%
+Val   Loss: 0.9903 | Val   Acc: 63.20%
+Epoch 9: 100%|██████████████████████████████████████████████████████████████████████████████████| 1342/1342 [10:12<00:00,  2.19it/s, loss=0.9385, acc=67.78%] 
+Validating: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████| 193/193 [01:27<00:00,  2.22it/s] 
+
+Epoch 9/10
+Train Loss: 0.8868 | Train Acc: 67.78%
+Val   Loss: 0.9895 | Val   Acc: 63.20%
+Epoch 10: 100%|█████████████████████████████████████████████████████████████████████████████████| 1342/1342 [10:12<00:00,  2.19it/s, loss=0.5610, acc=67.58%] 
+Validating: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████| 193/193 [01:26<00:00,  2.22it/s] 
+
+Epoch 10/10
+Train Loss: 0.8846 | Train Acc: 67.58%
+Val   Loss: 0.9895 | Val   Acc: 63.20%
+
+Early stopping after 10 epochs
+
+======================================================================
+TRAINING COMPLETE
+======================================================================
+[SAVE] Training history saved to logs\6_way\training_history.png
+
+======================================================================
+Done
+======================================================================

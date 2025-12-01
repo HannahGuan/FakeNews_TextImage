@@ -1,0 +1,22 @@
+======================================================================
+EVALUATION RESULTS
+======================================================================
+ACCURACY: 0.8312
+PRECISION: 0.8299
+RECALL: 0.8312
+F1: 0.8295
+ROC_AUC: 0.9025
+AVERAGE_CONFIDENCE: 0.8037
+AVERAGE_ENTROPY: 0.4290
+
+Classification Report:
+              precision    recall  f1-score   support
+
+        Real       0.84      0.89      0.87       237
+        Fake       0.81      0.74      0.77       148
+
+    accuracy                           0.83       385
+   macro avg       0.83      0.81      0.82       385
+weighted avg       0.83      0.83      0.83       385
+
+[SAVE] Metrics saved to logs\2_way\metrics_2_way.json

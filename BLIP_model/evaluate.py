@@ -105,13 +105,22 @@ class Evaluator:
         all_probabilities = []
         all_logits = []
 
+        # Check if we should use AMP for evaluation
+        use_amp = (self.config.model.dtype == "float16" and self.config.model.device == "cuda")
+
         with torch.no_grad():
             for batch in tqdm(dataloader, desc="Evaluating"):
                 images = batch["images"]
                 texts = batch["texts"]
                 labels = batch["labels"]
 
-                logits = self.model(images, texts)
+                # Use AMP if enabled
+                if use_amp:
+                    with torch.cuda.amp.autocast():
+                        logits = self.model(images, texts)
+                else:
+                    logits = self.model(images, texts)
+
                 probs = torch.softmax(logits, dim=1)
                 _, predicted = logits.max(1)
 
