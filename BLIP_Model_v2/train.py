@@ -31,20 +31,47 @@ class FakeNewsDataset(Dataset):
 
     def __getitem__(self, idx):
         row = self.df.iloc[idx]
-        
-        if self.config.image_column in row.index:
-            rel_path = str(row[self.config.image_column])
-        elif "id" in row.index:
-            rel_path = f"images/{row['id']}.jpg"
+
+        # construct image path based on id_column and image directory
+        image_id = str(row[self.config.id_column])
+
+        # determine which split this is (train or val) based on data root
+        # try to detect from config which image directory to use
+        if hasattr(self.config, 'train_image_dir') and hasattr(self.config, 'val_image_dir'):
+            # we'll need to check if this is train or val split
+            # for now, try both directories
+            possible_paths = [
+                self.data_root / self.config.train_image_dir / f"{image_id}.jpg",
+                self.data_root / self.config.val_image_dir / f"{image_id}.jpg",
+                self.data_root / self.config.train_image_dir / f"{image_id}.png",
+                self.data_root / self.config.val_image_dir / f"{image_id}.png",
+            ]
         else:
-            raise ValueError(f"Neither '{self.config.image_column}' nor 'id' column found in dataset")
-        
-        image_path = self.data_root / rel_path
-        try:
-            image = Image.open(image_path).convert("RGB")
-        except Exception as e:
-            # fallback to blank white image if loading fails
-            print(f"Warning: Could not load image {image_path}: {e}")
+            # fallback to generic images directory
+            possible_paths = [
+                self.data_root / "images" / f"{image_id}.jpg",
+                self.data_root / "images" / f"{image_id}.png",
+            ]
+
+        # try to load from one of the possible paths
+        image = None
+        image_path = None
+        for path in possible_paths:
+            if path.exists():
+                image_path = path
+                try:
+                    image = Image.open(path).convert("RGB")
+                    break
+                except Exception as e:
+                    print(f"[WARNING] Failed to load existing image {path}: {e}")
+                    continue
+
+        # if no image found, print warning and create blank image
+        if image is None:
+            print(f"[ERROR] Image not found for ID '{image_id}'. Tried paths:")
+            for path in possible_paths:
+                print(f"  - {path} (exists: {path.exists()})")
+            print(f"[WARNING] Using blank white image as fallback")
             image = Image.new("RGB", (224, 224), color="white")
 
         # get text and label

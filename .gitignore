@@ -9,3 +9,5 @@ train_images.zip
 .DS_Store
 .DS_Store
 *.pth
+Data_processing/dev_sampled_with_images.csv
+Data_processing/train_sampled_with_images.csv

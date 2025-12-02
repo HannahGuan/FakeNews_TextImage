@@ -143,7 +143,7 @@ class FakeNewsClassifier(nn.Module):
     def forward(self, images, texts, pooling_strategy="max"):
         """
         Forward pass through the network
-        
+
         Args:
             images: List[PIL.Image] - Batch of images
             texts: List[str] - Batch of text strings
@@ -151,13 +151,13 @@ class FakeNewsClassifier(nn.Module):
                 - 'max': Keep strongest signals (best for detecting artifacts/manipulation)
                 - 'mean': Average all tokens (original approach)
                 - 'attention': Weighted average based on feature magnitude
-        
+
         Returns:
             logits: Tensor [batch_size, num_classes] - Raw logits (no softmax)
         """
         # extract features from BLIP-2 with specified pooling
         feats = self.blip2.extract_features(images, texts, pooling_strategy=pooling_strategy)
-        
+
         # concatenate all enabled features
         parts = []
         if self.config.model.extract_image_embeds:
@@ -168,25 +168,30 @@ class FakeNewsClassifier(nn.Module):
             parts.append(feats["similarity_score"].unsqueeze(1))  # [batch, 1]
         if self.config.model.extract_itm_score:
             parts.append(feats["itm_score"].unsqueeze(1))  # [batch, 1]
-        
+
         # concatenate: [batch, input_dim]
         x = torch.cat(parts, dim=1)
-        
+
+        # convert to float32 if needed (classifier layers are in float32)
+        # this ensures dtype compatibility between BLIP-2 features and classifier
+        if x.dtype == torch.float16:
+            x = x.float()
+
         # save input for skip connection
         identity = self.skip(x)  # [batch, hidden[-1]]
-        
+
         # first layer with activation and dropout
         x = F.relu(self.bn1(self.fc1(x)))
         x = self.dropout1(x)
-        
+
         # pass through intermediate layers
         for layer in self.layers:
             x = layer(x)  # each layer has Linear + BN + ReLU + Dropout
-        
+
         # add skip connection (residual)
         x = x + identity  # [batch, hidden[-1]]
-        
+
         # final output layer (no activation - raw logits)
         logits = self.output(x)  # [batch, num_classes]
-        
+
         return logits
