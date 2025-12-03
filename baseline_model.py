@@ -311,7 +311,7 @@ def main(args):
     ])
 
     # load and split dev into val/test (same as BLIP model)
-    dev_df = pd.read_csv('../Data/dev_sampled_with_images.csv')
+    dev_df = pd.read_csv('../dev_sampled_with_images.csv')
     label_column = f'{LABEL_TYPE}_label'
     val_df, test_df = train_test_split(
         dev_df,
@@ -321,8 +321,8 @@ def main(args):
     )
 
     # save split CSVs for later use
-    val_csv_path = f'../Data/val_split_{LABEL_TYPE}.csv'
-    test_csv_path = f'../Data/test_split_{LABEL_TYPE}.csv'
+    val_csv_path = f'../val_split_{LABEL_TYPE}.csv'
+    test_csv_path = f'../test_split_{LABEL_TYPE}.csv'
     val_df.to_csv(val_csv_path, index=False)
     test_df.to_csv(test_csv_path, index=False)
     print(f"[DATA] Val split saved to {val_csv_path}")
@@ -330,8 +330,8 @@ def main(args):
 
     # create datasets
     train_dataset = MultiModalDataset(
-        '../Data/train_sampled_with_images.csv',
-        '../Data/train_images',
+        '../train_sampled_with_images.csv',
+        '../train_images',
         tokenizer,
         image_transform,
         max_length=MAX_LENGTH,
@@ -340,7 +340,7 @@ def main(args):
 
     val_dataset = MultiModalDataset(
         val_csv_path,
-        '../Data/dev_images',
+        '../dev_images',
         tokenizer,
         image_transform,
         max_length=MAX_LENGTH,
@@ -349,7 +349,7 @@ def main(args):
 
     test_dataset = MultiModalDataset(
         test_csv_path,
-        '../Data/dev_images',
+        '../dev_images',
         tokenizer,
         image_transform,
         max_length=MAX_LENGTH,
