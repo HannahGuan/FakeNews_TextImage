@@ -184,6 +184,10 @@ def main(args):
     
     # base config
     config = Config()
+
+    # use smaller grid search dataset
+    config.data.train_csv = "train_grid_search.csv"
+
     if args.classification_type:
         config.data.classification_type = args.classification_type
         config.data.__post_init__()

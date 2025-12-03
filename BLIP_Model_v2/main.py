@@ -104,7 +104,7 @@ def main(args):
 
     set_seed(config.random_seed)
 
-    print("[1/4] Initializing BLIP-2...")
+    print("[1/4] nIitializing BLIP-2...")
     blip2_extractor = BLIP2FeatureExtractor(config.model)
 
     print("\n[2/4] Loading data...")
