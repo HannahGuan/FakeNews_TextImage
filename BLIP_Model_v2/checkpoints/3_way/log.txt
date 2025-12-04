@@ -1,0 +1,215 @@
+PS C:\Users\Hannah\Desktop\FakeNews_TextImage\BLIP_Model_v2> python3 main.py --mode train --classification-type 3_way --epochs 10 --batch-size 8 --lr 2e-5 --weight-decay 0.01 --eval-after-train
+
+======================================================================
+BLIP-2 FAKE NEWS DETECTION - IMPROVED VERSION
+======================================================================
+
+[CONFIG] Device: cuda, Dtype: float16
+[CONFIG] Classification: 2_way (2 classes)
+[CONFIG] Classifier output classes: 2
+[CONFIG] Classification: 3_way (3 classes)
+
+======================================================================
+CONFIGURATION SUMMARY
+======================================================================
+Mode: train
+Classification Type: 3_way (3 classes)
+Device: cuda
+Batch Size: 8
+Epochs: 10
+Learning Rate: 2e-05
+Pooling Strategy: max
+Use Focal Loss: False
+Use Scheduler: True
+Early Stopping: True (patience=3)
+Data Dir: ..\Data
+Checkpoint Dir: checkpoints\3_way
+======================================================================
+
+[SEED] Random seed set to 42
+[1/4] nIitializing BLIP-2...
+[BLIP-2] Loading model: Salesforce/blip2-itm-vit-g
+[BLIP-2] Device: cuda, Dtype: torch.float16
+[BLIP-2] Trainable parameters: 161,825,280 / 1,172,032,258 (13.81%)
+[BLIP-2] Model loaded with selective freezing
+
+[2/4] Loading data...
+
+======================================================================
+CLASS DISTRIBUTION & WEIGHTS
+======================================================================
+Class 0:  4384 samples (40.84%) | Weight: 0.8162
+Class 1:   250 samples ( 2.33%) | Weight: 14.3133
+Class 2:  6101 samples (56.83%) | Weight: 0.5865
+======================================================================
+
+[DATA] Using stratified split for val/test
+[DATA] Train: 10735, Val: 1538, Test: 385
+
+[3/4] Building model...
+[MODEL] Input feature dimension: 514
+[MODEL] Total parameters: 529,155
+[MODEL] Trainable parameters: 529,155
+[MODEL] Architecture: 514 -> 512 -> 256 -> 3
+
+[4/4] Training...
+Training with:
+  - Pooling: max
+  - Loss: Weighted CrossEntropy
+  - Optimizer: AdamW (weight_decay=0.01)
+  - Scheduler: ReduceLROnPlateau
+[TRAINING] Using Weighted Cross-Entropy Loss
+[OPTIMIZER] Classifier parameters: 529,155
+[OPTIMIZER] BLIP-2 parameters: 0
+[OPTIMIZER] Single LR: 2e-05
+[SCHEDULER] Using ReduceLROnPlateau (factor=0.5, patience=3)
+
+======================================================================
+STARTING TRAINING
+======================================================================
+Epoch 1 [Train]:   0%|                                                     | 0/1342 [00:00<?, ?it/s]Expanding inputs for image tokens in BLIP-2 should be done in processing. Please follow instruction here (https://gist.github.com/zucchini-nlp/e9f20b054fa322f84ac9311d9ab67042) to update your BLIP-2 model. Using processors without these attributes in the config is deprecated and will throw an error in v4.50.
+Epoch 1 [Train]: 100%|██████████████████████████████████████████| 1342/1342 [09:20<00:00,  2.40it/s]
+Validating: 100%|████████████████████████████████████████████████████████████| 193/193 [01:19<00:00]
+Current LR: 2.00e-05
+
+Epoch 1/10
+Train Loss: 5.5669 | Train Acc: 56.17%
+Val   Loss: 2.5293 | Val   Acc: 74.77%
+[SAVE] Best checkpoint saved to checkpoints\3_way\best_model.pt
+[BEST] New best model! Val Acc: 74.77%
+Epoch 2 [Train]: 100%|██████████████████████████████████████████| 1342/1342 [09:21<00:00,  2.39it/s]
+Validating: 100%|████████████████████████████████████████████████████████████| 193/193 [01:20<00:00]
+Current LR: 2.00e-05
+
+Epoch 2/10
+Train Loss: 3.7357 | Train Acc: 66.88%
+Val   Loss: 2.2494 | Val   Acc: 77.76%
+[SAVE] Best checkpoint saved to checkpoints\3_way\best_model.pt
+[BEST] New best model! Val Acc: 77.76%
+Epoch 3 [Train]: 100%|██████████████████████████████████████████| 1342/1342 [09:21<00:00,  2.39it/s]
+Validating: 100%|████████████████████████████████████████████████████████████| 193/193 [01:20<00:00]
+Current LR: 2.00e-05
+
+Epoch 3/10
+Train Loss: 3.1280 | Train Acc: 70.13%
+Val   Loss: 1.5113 | Val   Acc: 81.53%
+[SAVE] Best checkpoint saved to checkpoints\3_way\best_model.pt
+[BEST] New best model! Val Acc: 81.53%
+Epoch 4 [Train]: 100%|██████████████████████████████████████████| 1342/1342 [09:21<00:00,  2.39it/s]
+Validating: 100%|████████████████████████████████████████████████████████████| 193/193 [01:20<00:00]
+Current LR: 2.00e-05
+
+Epoch 4/10
+Train Loss: 2.6647 | Train Acc: 72.26%
+Val   Loss: 1.7028 | Val   Acc: 81.08%
+No improvement for 1 epoch(s)
+Epoch 5 [Train]: 100%|██████████████████████████████████████████| 1342/1342 [09:21<00:00,  2.39it/s]
+Validating: 100%|████████████████████████████████████████████████████████████| 193/193 [01:20<00:00]
+Current LR: 2.00e-05
+
+Epoch 5/10
+Train Loss: 2.4655 | Train Acc: 74.59%
+Val   Loss: 1.6649 | Val   Acc: 81.73%
+[SAVE] Best checkpoint saved to checkpoints\3_way\best_model.pt
+[BEST] New best model! Val Acc: 81.73%
+Epoch 6 [Train]: 100%|██████████████████████████████████████████| 1342/1342 [09:21<00:00,  2.39it/s]
+Validating: 100%|████████████████████████████████████████████████████████████| 193/193 [01:20<00:00]
+Current LR: 2.00e-05
+
+Epoch 6/10
+Train Loss: 2.3164 | Train Acc: 75.17%
+Val   Loss: 1.3780 | Val   Acc: 82.25%
+[SAVE] Best checkpoint saved to checkpoints\3_way\best_model.pt
+[BEST] New best model! Val Acc: 82.25%
+Epoch 7 [Train]: 100%|██████████████████████████████████████████| 1342/1342 [09:22<00:00,  2.38it/s]
+Validating: 100%|████████████████████████████████████████████████████████████| 193/193 [01:20<00:00]
+Current LR: 2.00e-05
+
+Epoch 7/10
+Train Loss: 2.1750 | Train Acc: 75.83%
+Val   Loss: 1.5788 | Val   Acc: 82.83%
+[SAVE] Best checkpoint saved to checkpoints\3_way\best_model.pt
+[BEST] New best model! Val Acc: 82.83%
+Epoch 8 [Train]: 100%|██████████████████████████████████████████| 1342/1342 [09:22<00:00,  2.39it/s]
+Validating: 100%|████████████████████████████████████████████████████████████| 193/193 [01:20<00:00]
+Current LR: 2.00e-05
+
+Epoch 8/10
+Train Loss: 2.0828 | Train Acc: 76.25%
+Val   Loss: 1.4169 | Val   Acc: 82.70%
+No improvement for 1 epoch(s)
+Epoch 9 [Train]: 100%|██████████████████████████████████████████| 1342/1342 [09:23<00:00,  2.38it/s]
+Validating: 100%|████████████████████████████████████████████████████████████| 193/193 [01:20<00:00]
+Current LR: 2.00e-05
+
+Epoch 9/10
+Train Loss: 1.9530 | Train Acc: 77.59%
+Val   Loss: 1.3613 | Val   Acc: 82.90%
+[SAVE] Best checkpoint saved to checkpoints\3_way\best_model.pt
+[BEST] New best model! Val Acc: 82.90%
+Epoch 10 [Train]: 100%|█████████████████████████████████████████| 1342/1342 [09:22<00:00,  2.39it/s]
+Validating: 100%|████████████████████████████████████████████████████████████| 193/193 [01:20<00:00]
+Current LR: 2.00e-05
+
+Epoch 10/10
+Train Loss: 1.8431 | Train Acc: 78.00%
+Val   Loss: 1.3794 | Val   Acc: 83.94%
+[SAVE] Best checkpoint saved to checkpoints\3_way\best_model.pt
+[BEST] New best model! Val Acc: 83.94%
+
+======================================================================
+TRAINING COMPLETE
+======================================================================
+Best Validation Accuracy: 83.94%
+Best Validation Loss: 1.3794
+======================================================================
+
+[SAVE] Training history saved to logs\3_way\training_history.png
+
+======================================================================
+TRAINING COMPLETE
+======================================================================
+Best validation accuracy: 83.94%
+Final validation accuracy: 83.94%
+Model saved to: checkpoints\3_way\best_model.pt
+======================================================================
+
+[BONUS] Evaluating on test set...
+Evaluating: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████| 49/49 [00:19<00:00,  2.46it/s]
+
+======================================================================
+EVALUATION RESULTS
+======================================================================
+ACCURACY: 0.8182
+PRECISION: 0.8199
+RECALL: 0.8182
+F1: 0.8146
+ROC_AUC: 0.9420
+AVERAGE_CONFIDENCE: 0.9734
+AVERAGE_ENTROPY: 0.0637
+
+Classification Report:
+                   precision    recall  f1-score   support
+
+             Real       0.83      0.68      0.75       148
+ Fake (True Text)       0.80      0.89      0.84         9
+Fake (False Text)       0.81      0.90      0.85       228
+
+         accuracy                           0.82       385
+        macro avg       0.82      0.82      0.82       385
+     weighted avg       0.82      0.82      0.81       385
+
+[SAVE] Metrics saved to logs\3_way\metrics_3_way.json
+[SAVE] Confusion matrix data saved to logs\3_way\confusion_matrix_3_way.json
+
+[SAVE] Confusion matrix saved to logs\3_way\confusion_matrix_3_way.png
+[SAVE] ROC data saved to logs\3_way\roc_data_3_way.json
+[SAVE] ROC curves saved to logs\3_way\roc_curve_3_way.png
+[SAVE] Precision-Recall data saved to logs\3_way\pr_data_3_way.json
+[SAVE] Precision-Recall curves saved to logs\3_way\pr_curve_3_way.png
+
+[SAVE] Predictions (JSON) saved to logs\3_way\predictions.json
+
+======================================================================
+DONE
+======================================================================

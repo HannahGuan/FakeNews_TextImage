@@ -1,0 +1,205 @@
+PS C:\Users\Hannah\Desktop\FakeNews_TextImage\BLIP_Model_v2> python3 main.py --mode train --classification-type 2_way --epochs 10 --batch-size 8 --lr 2e-5 --weight-decay 0.01 --eval-after-train
+
+======================================================================
+BLIP-2 FAKE NEWS DETECTION - IMPROVED VERSION
+======================================================================
+
+[CONFIG] Device: cuda, Dtype: float16
+[CONFIG] Classification: 2_way (2 classes)
+[CONFIG] Classifier output classes: 2
+[CONFIG] Classification: 2_way (2 classes)
+
+======================================================================
+CONFIGURATION SUMMARY
+======================================================================
+Mode: train
+Classification Type: 2_way (2 classes)
+Device: cuda
+Batch Size: 8
+Epochs: 10
+Learning Rate: 2e-05
+Pooling Strategy: max
+Use Focal Loss: False
+Use Scheduler: True
+Early Stopping: True (patience=3)
+Data Dir: ..\Data
+Checkpoint Dir: checkpoints\2_way
+======================================================================
+
+[SEED] Random seed set to 42
+[1/4] nIitializing BLIP-2...
+[BLIP-2] Loading model: Salesforce/blip2-itm-vit-g
+[BLIP-2] Device: cuda, Dtype: torch.float16
+[BLIP-2] Trainable parameters: 161,825,280 / 1,172,032,258 (13.81%)
+[BLIP-2] Model loaded with selective freezing
+
+[2/4] Loading data...
+
+======================================================================
+CLASS DISTRIBUTION & WEIGHTS
+======================================================================
+Class 0:  6351 samples (59.16%) | Weight: 0.8451
+Class 1:  4384 samples (40.84%) | Weight: 1.2243
+======================================================================
+
+[DATA] Using stratified split for val/test
+[DATA] Train: 10735, Val: 1538, Test: 385
+
+[3/4] Building model...
+[MODEL] Input feature dimension: 514
+[MODEL] Total parameters: 528,898
+[MODEL] Trainable parameters: 528,898
+[MODEL] Architecture: 514 -> 512 -> 256 -> 2
+
+[4/4] Training...
+Training with:
+  - Pooling: max
+  - Loss: Weighted CrossEntropy
+  - Optimizer: AdamW (weight_decay=0.01)
+  - Scheduler: ReduceLROnPlateau
+[TRAINING] Using Weighted Cross-Entropy Loss
+[OPTIMIZER] Classifier parameters: 528,898
+[OPTIMIZER] BLIP-2 parameters: 0
+[OPTIMIZER] Single LR: 2e-05
+[SCHEDULER] Using ReduceLROnPlateau (factor=0.5, patience=3)
+
+======================================================================
+STARTING TRAINING
+======================================================================
+Epoch 1 [Train]:   0%|                                                     | 0/1342 [00:00<?, ?it/s]Expanding inputs for image tokens in BLIP-2 should be done in processing. Please follow instruction here (https://gist.github.com/zucchini-nlp/e9f20b054fa322f84ac9311d9ab67042) to update your BLIP-2 model. Using processors without these attributes in the config is deprecated and will throw an error in v4.50.
+Epoch 1 [Train]: 100%|██████████████████████████████████████████| 1342/1342 [09:20<00:00,  2.39it/s]
+Validating: 100%|████████████████████████████████████████████████████████████| 193/193 [01:19<00:00]
+Current LR: 2.00e-05
+
+Epoch 1/10
+Train Loss: 4.4836 | Train Acc: 62.43%
+Val   Loss: 1.7081 | Val   Acc: 78.09%
+[SAVE] Best checkpoint saved to checkpoints\2_way\best_model.pt
+[BEST] New best model! Val Acc: 78.09%
+Epoch 2 [Train]: 100%|██████████████████████████████████████████| 1342/1342 [09:21<00:00,  2.39it/s]
+Validating: 100%|████████████████████████████████████████████████████████████| 193/193 [01:19<00:00]
+Current LR: 2.00e-05
+
+Epoch 2/10
+Train Loss: 3.4660 | Train Acc: 69.76%
+Val   Loss: 1.5944 | Val   Acc: 80.75%
+[SAVE] Best checkpoint saved to checkpoints\2_way\best_model.pt
+[BEST] New best model! Val Acc: 80.75%
+Epoch 3 [Train]: 100%|██████████████████████████████████████████| 1342/1342 [09:21<00:00,  2.39it/s]
+Validating: 100%|████████████████████████████████████████████████████████████| 193/193 [01:19<00:00]
+Current LR: 2.00e-05
+
+Epoch 3/10
+Train Loss: 3.1193 | Train Acc: 72.87%
+Val   Loss: 1.5028 | Val   Acc: 82.83%
+[SAVE] Best checkpoint saved to checkpoints\2_way\best_model.pt
+[BEST] New best model! Val Acc: 82.83%
+Epoch 4 [Train]: 100%|██████████████████████████████████████████| 1342/1342 [09:21<00:00,  2.39it/s]
+Validating: 100%|████████████████████████████████████████████████████████████| 193/193 [01:19<00:00]
+Current LR: 2.00e-05
+
+Epoch 4/10
+Train Loss: 2.8897 | Train Acc: 74.15%
+Val   Loss: 1.2615 | Val   Acc: 83.94%
+[SAVE] Best checkpoint saved to checkpoints\2_way\best_model.pt
+[BEST] New best model! Val Acc: 83.94%
+Epoch 5 [Train]: 100%|██████████████████████████████████████████| 1342/1342 [09:21<00:00,  2.39it/s]
+Validating: 100%|████████████████████████████████████████████████████████████| 193/193 [01:19<00:00]
+Current LR: 2.00e-05
+
+Epoch 5/10
+Train Loss: 2.7901 | Train Acc: 74.40%
+Val   Loss: 1.3823 | Val   Acc: 83.81%
+No improvement for 1 epoch(s)
+Epoch 6 [Train]: 100%|██████████████████████████████████████████| 1342/1342 [09:20<00:00,  2.39it/s]
+Validating: 100%|████████████████████████████████████████████████████████████| 193/193 [01:19<00:00]
+Current LR: 2.00e-05
+
+Epoch 6/10
+Train Loss: 2.5049 | Train Acc: 76.43%
+Val   Loss: 1.2113 | Val   Acc: 85.11%
+[SAVE] Best checkpoint saved to checkpoints\2_way\best_model.pt
+[BEST] New best model! Val Acc: 85.11%
+Epoch 7 [Train]: 100%|██████████████████████████████████████████| 1342/1342 [09:19<00:00,  2.40it/s]
+Validating: 100%|████████████████████████████████████████████████████████████| 193/193 [01:19<00:00]
+Current LR: 2.00e-05
+
+Epoch 7/10
+Train Loss: 2.3994 | Train Acc: 77.00%
+Val   Loss: 1.4723 | Val   Acc: 83.49%
+No improvement for 1 epoch(s)
+Epoch 8 [Train]: 100%|██████████████████████████████████████████| 1342/1342 [09:19<00:00,  2.40it/s]
+Validating: 100%|████████████████████████████████████████████████████████████| 193/193 [01:19<00:00]
+Current LR: 2.00e-05
+
+Epoch 8/10
+Train Loss: 2.3259 | Train Acc: 77.38%
+Val   Loss: 1.2334 | Val   Acc: 84.79%
+No improvement for 2 epoch(s)
+Epoch 9 [Train]: 100%|██████████████████████████████████████████| 1342/1342 [09:19<00:00,  2.40it/s]
+Validating: 100%|████████████████████████████████████████████████████████████| 193/193 [01:19<00:00]
+Current LR: 2.00e-05
+
+Epoch 9/10
+Train Loss: 2.3277 | Train Acc: 77.51%
+Val   Loss: 1.4391 | Val   Acc: 84.01%
+No improvement for 3 epoch(s)
+
+[STOP] Early stopping triggered after 9 epochs
+Best Val Acc: 85.11%
+
+======================================================================
+TRAINING COMPLETE
+======================================================================
+Best Validation Accuracy: 85.11%
+Best Validation Loss: 1.2113
+======================================================================
+
+[SAVE] Training history saved to logs\2_way\training_history.png
+
+======================================================================
+TRAINING COMPLETE
+======================================================================
+Best validation accuracy: 85.11%
+Final validation accuracy: 84.01%
+Model saved to: checkpoints\2_way\best_model.pt
+======================================================================
+
+[BONUS] Evaluating on test set...
+Evaluating: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████| 49/49 [00:20<00:00,  2.39it/s] 
+
+======================================================================
+EVALUATION RESULTS
+======================================================================
+ACCURACY: 0.8286
+PRECISION: 0.8273
+RECALL: 0.8286
+F1: 0.8273
+ROC_AUC: 0.9096
+AVERAGE_CONFIDENCE: 0.9762
+AVERAGE_ENTROPY: 0.0573
+
+Classification Report:
+              precision    recall  f1-score   support
+
+        Real       0.85      0.88      0.86       237
+        Fake       0.80      0.74      0.77       148
+
+    accuracy                           0.83       385
+   macro avg       0.82      0.81      0.82       385
+weighted avg       0.83      0.83      0.83       385
+
+[SAVE] Metrics saved to logs\2_way\metrics_2_way.json
+[SAVE] Confusion matrix data saved to logs\2_way\confusion_matrix_2_way.json
+
+[SAVE] Confusion matrix saved to logs\2_way\confusion_matrix_2_way.png
+[SAVE] ROC data saved to logs\2_way\roc_data_2_way.json
+[SAVE] ROC curve saved to logs\2_way\roc_curve_2_way.png
+[SAVE] Precision-Recall data saved to logs\2_way\pr_data_2_way.json
+[SAVE] Precision-Recall curve saved to logs\2_way\pr_curve_2_way.png
+
+[SAVE] Predictions (JSON) saved to logs\2_way\predictions.json
+
+======================================================================
+DONE
+======================================================================

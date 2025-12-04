@@ -1,0 +1,93 @@
+PS C:\Users\Hannah\Desktop\FakeNews_TextImage\Baseline_v2> python3 baseline_model.py --classification-type 2_way --epochs 10 --lr 2e-5                   
+Using device: cuda
+Label type: 2_way (2 classes)
+Batch size: 8, Epochs: 10, Learning rate: 2e-05
+[DATA] Val split saved to ../Data/val_split_2_way.csv
+[DATA] Test split saved to ../Data/test_split_2_way.csv
+Loaded 10735 samples from ../Data/train_sampled_with_images.csv with 2_way labels
+Loaded 1538 samples from ../Data/val_split_2_way.csv with 2_way labels
+Loaded 385 samples from ../Data/test_split_2_way.csv with 2_way labels
+[DATA] Train: 10735, Val: 1538, Test: 385
+Total parameters: 134,696,258
+Trainable parameters: 1,705,986
+
+Epoch 1/10
+Training: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████| 1342/1342 [01:04<00:00, 20.79it/s] 
+Train Loss: 0.5555, Train Acc: 69.76%
+Evaluating: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████| 193/193 [00:18<00:00, 10.22it/s] 
+Val Loss: 0.4371, Val Acc: 78.74%
+[SAVE] Checkpoint saved to checkpoints\2_way\best_model.pth
+
+Epoch 2/10
+Training: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████| 1342/1342 [01:04<00:00, 20.90it/s] 
+Train Loss: 0.4658, Train Acc: 76.94%
+Evaluating: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████| 193/193 [00:18<00:00, 10.28it/s] 
+Val Loss: 0.4035, Val Acc: 80.43%
+[SAVE] Checkpoint saved to checkpoints\2_way\best_model.pth
+
+Epoch 3/10
+Training: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████| 1342/1342 [01:04<00:00, 20.97it/s] 
+Train Loss: 0.4395, Train Acc: 79.06%
+Evaluating: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████| 193/193 [00:18<00:00, 10.18it/s] 
+Val Loss: 0.3832, Val Acc: 82.12%
+[SAVE] Checkpoint saved to checkpoints\2_way\best_model.pth
+
+Epoch 4/10
+Training: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████| 1342/1342 [01:04<00:00, 20.92it/s] 
+Train Loss: 0.4225, Train Acc: 79.89%
+Evaluating: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████| 193/193 [00:18<00:00, 10.30it/s] 
+Val Loss: 0.3766, Val Acc: 82.77%
+[SAVE] Checkpoint saved to checkpoints\2_way\best_model.pth
+
+Epoch 5/10
+Training: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████| 1342/1342 [01:04<00:00, 20.81it/s] 
+Train Loss: 0.4202, Train Acc: 80.20%
+Evaluating: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████| 193/193 [00:18<00:00, 10.29it/s] 
+Val Loss: 0.3655, Val Acc: 83.29%
+[SAVE] Checkpoint saved to checkpoints\2_way\best_model.pth
+
+Epoch 6/10
+Training: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████| 1342/1342 [01:03<00:00, 20.97it/s] 
+Train Loss: 0.4058, Train Acc: 80.98%
+Evaluating: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████| 193/193 [00:18<00:00, 10.35it/s] 
+Val Loss: 0.3717, Val Acc: 83.62%
+[SAVE] Checkpoint saved to checkpoints\2_way\best_model.pth
+
+Epoch 7/10
+Training: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████| 1342/1342 [01:03<00:00, 21.07it/s] 
+Train Loss: 0.3975, Train Acc: 81.43%
+Evaluating: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████| 193/193 [00:18<00:00, 10.39it/s] 
+Val Loss: 0.3829, Val Acc: 81.73%
+
+Epoch 8/10
+Training: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████| 1342/1342 [01:03<00:00, 21.08it/s] 
+Train Loss: 0.3925, Train Acc: 81.56%
+Evaluating: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████| 193/193 [00:18<00:00, 10.25it/s] 
+Val Loss: 0.3731, Val Acc: 82.51%
+
+Epoch 9/10
+Training: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████| 1342/1342 [01:04<00:00, 20.85it/s] 
+Train Loss: 0.3834, Train Acc: 82.14%
+Evaluating: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████| 193/193 [00:18<00:00, 10.33it/s] 
+Val Loss: 0.3871, Val Acc: 81.92%
+
+Epoch 10/10
+Training: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████| 1342/1342 [01:03<00:00, 21.11it/s] 
+Train Loss: 0.3784, Train Acc: 82.39%
+Evaluating: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████| 193/193 [00:18<00:00, 10.38it/s] 
+Val Loss: 0.3477, Val Acc: 84.33%
+[SAVE] Checkpoint saved to checkpoints\2_way\best_model.pth
+
+======================================================================
+TRAINING COMPLETE
+======================================================================
+Best validation accuracy: 84.33%
+
+======================================================================
+EVALUATING ON TEST SET
+======================================================================
+C:\Users\Hannah\Desktop\FakeNews_TextImage\Baseline_v2\baseline_model.py:454: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+  checkpoint = torch.load(checkpoint_path)
+Evaluating: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████| 49/49 [00:13<00:00,  3.72it/s]
+Test Loss: 0.3769, Test Acc: 83.90%
+[SAVE] Training history saved to logs\2_way\training_history_2_way.png

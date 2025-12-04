@@ -59,15 +59,15 @@ class FakeNewsClassifier(nn.Module):
         |
         [image_embeds | text_embeds | similarity_score | itm_score]
         |
-        FC1 (input_dim → hidden[0]) + BatchNorm + ReLU + Dropout
+        FC1 (input_dim -> hidden[0]) + BatchNorm + ReLU + Dropout
         |
-        FC2 (hidden[0] → hidden[1]) + BatchNorm + ReLU + Dropout
+        FC2 (hidden[0] -> hidden[1]) + BatchNorm + ReLU + Dropout
         |
         ... (more layers if specified)
         |
-        Skip Connection (input_dim → hidden[-1])
+        Skip Connection (input_dim -> hidden[-1])
         |
-        Output (hidden[-1] → num_classes)
+        Output (hidden[-1] -> num_classes)
     """
 
     def __init__(self, blip2_extractor: BLIP2FeatureExtractor, config: Config):
@@ -123,7 +123,7 @@ class FakeNewsClassifier(nn.Module):
         trainable_params = sum(p.numel() for p in self.parameters() if p.requires_grad)
         print(f"[MODEL] Total parameters: {total_params:,}")
         print(f"[MODEL] Trainable parameters: {trainable_params:,}")
-        print(f"[MODEL] Architecture: {input_dim} → {' → '.join(map(str, hidden_dims))} → {num_classes}")
+        print(f"[MODEL] Architecture: {input_dim} -> {' -> '.join(map(str, hidden_dims))} -> {num_classes}")
 
     def _initialize_weights(self):
         """

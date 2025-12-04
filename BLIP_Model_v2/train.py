@@ -11,6 +11,7 @@ from PIL import Image, ImageFile
 from pathlib import Path
 from sklearn.model_selection import train_test_split
 from sklearn.utils.class_weight import compute_class_weight
+import sys
 
 from config import DataConfig, Config
 from model import FakeNewsClassifier, FocalLoss
@@ -323,8 +324,23 @@ class Trainer:
         correct = 0
         total = 0
 
-        pbar = tqdm(self.train_loader, desc=f"Epoch {epoch+1} [Train]")
-        for batch_idx, batch in enumerate(pbar):
+        # Disable tqdm if output is redirected to avoid excessive logging
+        use_tqdm = sys.stdout.isatty()
+
+        if use_tqdm:
+            pbar = tqdm(
+                self.train_loader,
+                desc=f"Epoch {epoch+1} [Train]",
+                ncols=100,
+                bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}]'
+            )
+            iterator = pbar
+        else:
+            iterator = self.train_loader
+            num_batches = len(self.train_loader)
+            print(f"Epoch {epoch+1} [Train]: Starting {num_batches} batches...")
+
+        for batch_idx, batch in enumerate(iterator):
             images = batch["images"]
             texts = batch["texts"]
             labels = batch["labels"].to(self.device)
@@ -336,10 +352,10 @@ class Trainer:
             # backward pass
             self.optimizer.zero_grad()
             loss.backward()
-            
+
             # gradient clipping to prevent exploding gradients
             nn.utils.clip_grad_norm_(self.model.parameters(), self.config.training.max_grad_norm)
-            
+
             self.optimizer.step()
 
             # calculate metrics
@@ -348,16 +364,26 @@ class Trainer:
             total += labels.size(0)
             correct += pred.eq(labels).sum().item()
 
-            # update progress bar
-            current_acc = 100.0 * correct / total
-            pbar.set_postfix({
-                "loss": f"{loss.item():.4f}", 
-                "acc": f"{current_acc:.2f}%"
-            })
+            # update progress
+            if use_tqdm:
+                # update tqdm progress bar every 10 batches
+                if (batch_idx + 1) % 10 == 0 or (batch_idx + 1) == len(self.train_loader):
+                    current_acc = 100.0 * correct / total
+                    current_loss = total_loss / (batch_idx + 1)
+                    pbar.set_postfix({
+                        "loss": f"{current_loss:.4f}",
+                        "acc": f"{current_acc:.2f}%"
+                    })
+            else:
+                # print progress every 200 batches to reduce logging
+                if (batch_idx + 1) % 200 == 0 or (batch_idx + 1) == len(self.train_loader):
+                    current_acc = 100.0 * correct / total
+                    current_loss = total_loss / (batch_idx + 1)
+                    print(f"  [{batch_idx+1}/{len(self.train_loader)}] loss: {current_loss:.4f} | acc: {current_acc:.2f}%")
 
         avg_loss = total_loss / len(self.train_loader)
         avg_acc = 100.0 * correct / total
-        
+
         return avg_loss, avg_acc
 
     def validate(self):
@@ -366,10 +392,24 @@ class Trainer:
         total_loss = 0.0
         correct = 0
         total = 0
-        
+
+        # Disable tqdm if output is redirected to avoid excessive logging
+        use_tqdm = sys.stdout.isatty()
+
         with torch.no_grad():
-            pbar = tqdm(self.val_loader, desc="Validating")
-            for batch in pbar:
+            if use_tqdm:
+                pbar = tqdm(
+                    self.val_loader,
+                    desc="Validating",
+                    ncols=100,
+                    bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}]'
+                )
+                iterator = pbar
+            else:
+                iterator = self.val_loader
+                print(f"Validating: Starting {len(self.val_loader)} batches...")
+
+            for batch_idx, batch in enumerate(iterator):
                 images = batch["images"]
                 texts = batch["texts"]
                 labels = batch["labels"].to(self.device)
@@ -383,13 +423,23 @@ class Trainer:
                 _, pred = logits.max(1)
                 total += labels.size(0)
                 correct += pred.eq(labels).sum().item()
-                
-                # update progress bar
-                current_acc = 100.0 * correct / total
-                pbar.set_postfix({
-                    "loss": f"{loss.item():.4f}",
-                    "acc": f"{current_acc:.2f}%"
-                })
+
+                # update progress
+                if use_tqdm:
+                    # update tqdm progress bar every 5 batches
+                    if (batch_idx + 1) % 5 == 0 or (batch_idx + 1) == len(self.val_loader):
+                        current_acc = 100.0 * correct / total
+                        current_loss = total_loss / (batch_idx + 1)
+                        pbar.set_postfix({
+                            "loss": f"{current_loss:.4f}",
+                            "acc": f"{current_acc:.2f}%"
+                        })
+                else:
+                    # print progress every 50 batches to reduce logging
+                    if (batch_idx + 1) % 50 == 0 or (batch_idx + 1) == len(self.val_loader):
+                        current_acc = 100.0 * correct / total
+                        current_loss = total_loss / (batch_idx + 1)
+                        print(f"  [{batch_idx+1}/{len(self.val_loader)}] loss: {current_loss:.4f} | acc: {current_acc:.2f}%")
 
         avg_loss = total_loss / len(self.val_loader)
         avg_acc = 100.0 * correct / total
@@ -430,7 +480,7 @@ class Trainer:
                 self.best_val_loss = val_loss
                 self.patience_counter = 0
                 self.save_checkpoint(epoch, is_best=True)
-                print(f"✓ New best model! Val Acc: {val_acc:.2f}%")
+                print(f"[BEST] New best model! Val Acc: {val_acc:.2f}%")
             else:
                 self.patience_counter += 1
                 print(f"No improvement for {self.patience_counter} epoch(s)")
@@ -438,7 +488,7 @@ class Trainer:
             # early stopping
             if self.config.training.use_early_stopping and \
                self.patience_counter >= self.config.training.patience:
-                print(f"\n⚠ Early stopping triggered after {epoch+1} epochs")
+                print(f"\n[STOP] Early stopping triggered after {epoch+1} epochs")
                 print(f"Best Val Acc: {self.best_val_acc:.2f}%")
                 break
 

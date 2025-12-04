@@ -1,0 +1,17 @@
+{
+  "confusion_matrix": [
+    [
+      209,
+      28
+    ],
+    [
+      38,
+      110
+    ]
+  ],
+  "class_names": [
+    "Real",
+    "Fake"
+  ],
+  "normalized": false
+}

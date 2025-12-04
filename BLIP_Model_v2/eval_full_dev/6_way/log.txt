@@ -1,0 +1,97 @@
+python3 evaluate_on_full_dev.py --classification-type 6_way --checkpoint checkpoints/6_way/best_model.pt --output-dir eval_full_dev/6_way\BLIP_Model_v2>
+
+======================================================================
+EVALUATE ON FULL DEV SET
+======================================================================
+
+[CONFIG] Device: cuda, Dtype: float16
+[CONFIG] Classification: 2_way (2 classes)
+[CONFIG] Classifier output classes: 2
+[CONFIG] Classification: 6_way (6 classes)
+Classification Type: 6_way
+Number of Classes: 6
+Device: cuda
+Checkpoint: checkpoints/6_way/best_model.pt
+
+[1/4] Loading FULL dev set...
+Total dev samples: 1923
+
+Class distribution:
+6_way_label
+0    738
+1    125
+2    366
+3     42
+4    580
+5     72
+Name: count, dtype: int64
+
+[2/4] Initializing BLIP-2...
+[BLIP-2] Loading model: Salesforce/blip2-itm-vit-g
+[BLIP-2] Device: cuda, Dtype: torch.float16
+[BLIP-2] Trainable parameters: 161,825,280 / 1,172,032,258 (13.81%)
+[BLIP-2] Model loaded with selective freezing
+[3/4] Building model...
+[MODEL] Input feature dimension: 514
+[MODEL] Total parameters: 529,926
+[MODEL] Trainable parameters: 529,926
+[MODEL] Architecture: 514 -> 512 -> 256 -> 6
+[LOAD] Loading checkpoint from checkpoints\6_way\best_model.pt
+[LOAD] Checkpoint loaded successfully
+[INFO] Checkpoint best val accuracy: 77.37%
+[INFO] Checkpoint from epoch: 8
+
+[4/4] Evaluating on FULL dev set...
+Evaluating:   0%|                                                                                                               | 0/241 [00:00<?, ?it/s]Expanding inputs for image tokens in BLIP-2 should be done in processing. Please follow instruction here (https://gist.github.com/zucchini-nlp/e9f20b054fa322f84ac9311d9ab67042) to update your BLIP-2 model. Using processors without these attributes in the config is deprecated and will throw an error in v4.50.
+Evaluating: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████| 241/241 [01:40<00:00,  2.39it/s]
+
+======================================================================
+EVALUATION RESULTS
+======================================================================
+ACCURACY: 0.5762
+PRECISION: 0.6943
+RECALL: 0.5762
+F1: 0.5574
+ROC_AUC: 0.9082
+AVERAGE_CONFIDENCE: 0.9243
+AVERAGE_ENTROPY: 0.1885
+
+Classification Report:
+                  precision    recall  f1-score   support
+
+            Real       0.91      0.45      0.60       738
+   Satire/Parody       0.50      0.43      0.47       125
+      Misleading       0.74      0.24      0.36       366
+        Imposter       0.38      0.45      0.41        42
+False Connection       0.51      0.97      0.67       580
+     Manipulated       0.29      0.72      0.41        72
+
+
+        accuracy                           0.58      1923
+
+        accuracy                           0.58      1923
+        accuracy                           0.58      1923
+       macro avg       0.55      0.54      0.49      1923
+    weighted avg       0.69      0.58      0.56      1923
+    weighted avg       0.69      0.58      0.56      1923
+
+[SAVE] Metrics saved to logs\metrics_6_way.json
+[SAVE] Confusion matrix data saved to logs\confusion_matrix_6_way.json
+
+[SAVE] Confusion matrix saved to logs\confusion_matrix_6_way.png
+[SAVE] ROC data saved to logs\roc_data_6_way.json
+[SAVE] ROC curves saved to logs\roc_curve_6_way.png
+[SAVE] Precision-Recall data saved to logs\pr_data_6_way.json
+[SAVE] Precision-Recall curves saved to logs\pr_curve_6_way.png
+
+[SAVE] Predictions (JSON) saved to eval_full_dev\6_way\predictions_full_dev.json
+
+======================================================================
+EVALUATION COMPLETE
+======================================================================
+Total Samples: 1923
+Accuracy: 57.62%
+F1 Score: 0.5574
+ROC-AUC: 0.9082
+Results saved to: eval_full_dev\6_way\predictions_full_dev.json
+======================================================================
