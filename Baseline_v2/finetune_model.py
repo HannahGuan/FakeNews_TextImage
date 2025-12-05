@@ -586,7 +586,7 @@ def main(args):
 
     # Get the base data directory (parent of Baseline directory)
     script_dir = Path(__file__).resolve().parent
-    data_dir = script_dir.parent
+    data_dir = script_dir.parent / 'Data'
 
     # Device
     device = torch.device('cuda' if torch.cuda.is_available() and not args.force_cpu else 'cpu')

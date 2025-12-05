@@ -1,0 +1,61 @@
+{
+  "confusion_matrix": [
+    [
+      132,
+      0,
+      8,
+      0,
+      7,
+      1
+    ],
+    [
+      15,
+      5,
+      3,
+      0,
+      9,
+      1
+    ],
+    [
+      23,
+      0,
+      35,
+      0,
+      3,
+      3
+    ],
+    [
+      5,
+      1,
+      1,
+      0,
+      0,
+      1
+    ],
+    [
+      10,
+      0,
+      3,
+      0,
+      100,
+      0
+    ],
+    [
+      8,
+      0,
+      0,
+      0,
+      1,
+      10
+    ]
+  ],
+  "class_names": [
+    "Fake",
+    "Satire/Parody",
+    "Misleading",
+    "Imposter",
+    "False Connection",
+    "Manipulated"
+  ],
+  "normalized": false
+}

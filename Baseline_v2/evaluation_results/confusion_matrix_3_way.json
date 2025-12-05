@@ -1,0 +1,25 @@
+{
+  "confusion_matrix": [
+    [
+      112,
+      0,
+      36
+    ],
+    [
+      1,
+      8,
+      2
+    ],
+    [
+      25,
+      0,
+      201
+    ]
+  ],
+  "class_names": [
+    "Fake",
+    "Satire",
+    "Real"
+  ],
+  "normalized": false
+}

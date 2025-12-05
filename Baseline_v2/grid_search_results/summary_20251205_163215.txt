@@ -1,0 +1,160 @@
+================================================================================
+GRID SEARCH SUMMARY REPORT
+================================================================================
+
+Total configurations tested: 48
+Successful runs: 48
+Failed runs: 0
+
+TOP 10 CONFIGURATIONS:
+--------------------------------------------------------------------------------
+
+#1 - Dev Acc: 86.93%
+  Config:
+    loss_type: label_smoothing
+    learning_rate: 0.0001
+    batch_size: 16
+    dropout: 0.3
+    pooling_strategy: mean
+    hidden_dim: 512
+    num_epochs: 10
+    focal_gamma: 2.0
+    label_smoothing: 0.1
+  Best Epoch: 9
+  Final Train Acc: 86.04%
+  Final Dev Acc: 86.93%
+
+#2 - Dev Acc: 85.57%
+  Config:
+    loss_type: weighted_ce
+    learning_rate: 0.0001
+    batch_size: 8
+    dropout: 0.3
+    pooling_strategy: mean
+    hidden_dim: 512
+    num_epochs: 10
+    focal_gamma: 2.0
+    label_smoothing: 0.1
+  Best Epoch: 8
+  Final Train Acc: 84.35%
+  Final Dev Acc: 84.72%
+
+#3 - Dev Acc: 85.50%
+  Config:
+    loss_type: label_smoothing
+    learning_rate: 0.0001
+    batch_size: 8
+    dropout: 0.3
+    pooling_strategy: mean
+    hidden_dim: 512
+    num_epochs: 10
+    focal_gamma: 2.0
+    label_smoothing: 0.1
+  Best Epoch: 6
+  Final Train Acc: 85.11%
+  Final Dev Acc: 85.37%
+
+#4 - Dev Acc: 85.44%
+  Config:
+    loss_type: label_smoothing
+    learning_rate: 0.0005
+    batch_size: 8
+    dropout: 0.3
+    pooling_strategy: mean
+    hidden_dim: 512
+    num_epochs: 10
+    focal_gamma: 2.0
+    label_smoothing: 0.1
+  Best Epoch: 8
+  Final Train Acc: 83.31%
+  Final Dev Acc: 84.33%
+
+#5 - Dev Acc: 85.24%
+  Config:
+    loss_type: label_smoothing
+    learning_rate: 0.0005
+    batch_size: 16
+    dropout: 0.3
+    pooling_strategy: mean
+    hidden_dim: 512
+    num_epochs: 10
+    focal_gamma: 2.0
+    label_smoothing: 0.1
+  Best Epoch: 8
+  Final Train Acc: 84.74%
+  Final Dev Acc: 84.33%
+
+#6 - Dev Acc: 85.24%
+  Config:
+    loss_type: label_smoothing
+    learning_rate: 5e-05
+    batch_size: 16
+    dropout: 0.3
+    pooling_strategy: mean
+    hidden_dim: 512
+    num_epochs: 10
+    focal_gamma: 2.0
+    label_smoothing: 0.1
+  Best Epoch: 9
+  Final Train Acc: 86.20%
+  Final Dev Acc: 85.24%
+
+#7 - Dev Acc: 85.18%
+  Config:
+    loss_type: weighted_ce
+    learning_rate: 5e-05
+    batch_size: 8
+    dropout: 0.3
+    pooling_strategy: mean
+    hidden_dim: 512
+    num_epochs: 10
+    focal_gamma: 2.0
+    label_smoothing: 0.1
+  Best Epoch: 9
+  Final Train Acc: 84.10%
+  Final Dev Acc: 85.18%
+
+#8 - Dev Acc: 85.11%
+  Config:
+    loss_type: weighted_ce
+    learning_rate: 0.0001
+    batch_size: 16
+    dropout: 0.3
+    pooling_strategy: mean
+    hidden_dim: 512
+    num_epochs: 10
+    focal_gamma: 2.0
+    label_smoothing: 0.1
+  Best Epoch: 9
+  Final Train Acc: 85.38%
+  Final Dev Acc: 85.11%
+
+#9 - Dev Acc: 84.98%
+  Config:
+    loss_type: weighted_ce
+    learning_rate: 0.0001
+    batch_size: 16
+    dropout: 0.5
+    pooling_strategy: mean
+    hidden_dim: 512
+    num_epochs: 10
+    focal_gamma: 2.0
+    label_smoothing: 0.1
+  Best Epoch: 8
+  Final Train Acc: 83.97%
+  Final Dev Acc: 84.92%
+
+#10 - Dev Acc: 84.98%
+  Config:
+    loss_type: label_smoothing
+    learning_rate: 0.0001
+    batch_size: 16
+    dropout: 0.5
+    pooling_strategy: mean
+    hidden_dim: 512
+    num_epochs: 10
+    focal_gamma: 2.0
+    label_smoothing: 0.1
+  Best Epoch: 7
+  Final Train Acc: 84.03%
+  Final Dev Acc: 84.72%
