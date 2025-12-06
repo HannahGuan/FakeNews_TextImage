@@ -8,39 +8,23 @@ Time: 2025-11-27
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from transformers import BertModel, BertTokenizer
 from torchvision import models, transforms
 from torch.utils.data import Dataset, DataLoader
 from PIL import Image
 import pandas as pd
-import numpy as np
 from tqdm import tqdm
-import os
-import ssl
-import certifi
-from typing import Tuple, Dict
 from pathlib import Path
 import matplotlib.pyplot as plt
 import argparse
 from sklearn.model_selection import train_test_split
 
-ssl_context = ssl.create_default_context(cafile=certifi.where())
 
 
 class MultiModalDataset(Dataset):
     """loading text and image pairs with labels."""
 
     def __init__(self, csv_path: str, image_dir: str, tokenizer, image_transform, max_length: int = 128, label_type: str = '2_way'):
-        """
-        Args:
-            csv_path: Path to CSV file
-            image_dir: Path to image directory
-            tokenizer: BERT tokenizer
-            image_transform: Image preprocessing transforms
-            max_length: Maximum sequence length for BERT
-            label_type: Type of label to use ('2_way', '3_way', or '6_way')
-        """
         self.data = pd.read_csv(csv_path)
         self.image_dir = Path(image_dir)
         self.tokenizer = tokenizer
@@ -92,7 +76,7 @@ class MultiModalDataset(Dataset):
             'input_ids': input_ids,
             'attention_mask': attention_mask,
             'image': image,
-            'label': torch.tensor(label, dtype=torch.long)  # long for CrossEntropyLoss
+            'label': torch.tensor(label, dtype=torch.long) 
         }
 
 
@@ -100,12 +84,6 @@ class MultiModalClassifier(nn.Module):
     """Baseline model: BERT + ResNet-50 with MLP classifier."""
 
     def __init__(self, num_classes: int = 2, hidden_dim: int = 512, dropout: float = 0.3):
-        """
-        Args:
-            num_classes: Number of output classes (2, 3, or 6)
-            hidden_dim: Hidden dimension for MLP
-            dropout: Dropout probability
-        """
         super(MultiModalClassifier, self).__init__()
         self.num_classes = num_classes
 
@@ -114,16 +92,12 @@ class MultiModalClassifier(nn.Module):
         self.bert_dim = 768  # BERT base hidden size
 
         # image encoder: ResNet-50
-        try:
-            # try the new API first (torchvision >= 0.13)
-            from torchvision.models import ResNet50_Weights
-            resnet = models.resnet50(weights=ResNet50_Weights.IMAGENET1K_V1)
-        except ImportError:
-            # old API
-            resnet = models.resnet50(pretrained=True)
+        from torchvision.models import ResNet50_Weights
+        resnet = models.resnet50(weights=ResNet50_Weights.IMAGENET1K_V2)
+
         # remove the final classification layer
         self.resnet = nn.Sequential(*list(resnet.children())[:-1])
-        self.resnet_dim = 2048  # ResNet-50 output dimension
+        self.resnet_dim = 2048
 
         # freeze pretrained models initially
         for param in self.bert.parameters():
@@ -140,7 +114,7 @@ class MultiModalClassifier(nn.Module):
             nn.Linear(hidden_dim, hidden_dim),
             nn.ReLU(),
             nn.Dropout(dropout),
-            nn.Linear(hidden_dim, num_classes)  # output logits for each class
+            nn.Linear(hidden_dim, num_classes) 
         )
 
     def forward(self, input_ids, attention_mask, image):
@@ -295,9 +269,6 @@ def main(args):
 
     # device
     device = torch.device('cuda' if torch.cuda.is_available() and not args.force_cpu else 'cpu')
-    print(f"Using device: {device}")
-    print(f"Label type: {LABEL_TYPE} ({NUM_CLASSES} classes)")
-    print(f"Batch size: {BATCH_SIZE}, Epochs: {NUM_EPOCHS}, Learning rate: {LEARNING_RATE}")
 
     # initialize tokenizer
     tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
@@ -315,7 +286,7 @@ def main(args):
     label_column = f'{LABEL_TYPE}_label'
     val_df, test_df = train_test_split(
         dev_df,
-        test_size=0.2,  # 20% for test, 80% for validation
+        test_size=0.2, 
         random_state=42,
         stratify=dev_df[label_column]
     )
@@ -325,8 +296,6 @@ def main(args):
     test_csv_path = f'../Data/test_split_{LABEL_TYPE}.csv'
     val_df.to_csv(val_csv_path, index=False)
     test_df.to_csv(test_csv_path, index=False)
-    print(f"[DATA] Val split saved to {val_csv_path}")
-    print(f"[DATA] Test split saved to {test_csv_path}")
 
     # create datasets
     train_dataset = MultiModalDataset(
@@ -355,8 +324,6 @@ def main(args):
         max_length=MAX_LENGTH,
         label_type=LABEL_TYPE
     )
-
-    print(f"[DATA] Train: {len(train_dataset)}, Val: {len(val_dataset)}, Test: {len(test_dataset)}")
 
     # create dataloaders
     train_loader = DataLoader(
@@ -438,17 +405,8 @@ def main(args):
                 'val_loss': val_loss,
                 'label_type': LABEL_TYPE,
             }, checkpoint_path)
-            print(f"[SAVE] Checkpoint saved to {checkpoint_path}")
 
-    print(f"\n{'='*70}")
-    print(f"TRAINING COMPLETE")
-    print(f"{'='*70}")
     print(f"Best validation accuracy: {best_val_acc:.2f}%")
-
-    # evaluate on test set
-    print(f"\n{'='*70}")
-    print(f"EVALUATING ON TEST SET")
-    print(f"{'='*70}")
 
     # load best model
     checkpoint = torch.load(checkpoint_path)
