@@ -105,7 +105,7 @@ class FocalLoss(nn.Module):
     def __init__(self, alpha=None, gamma=2.0, reduction='mean'):
         """
         Args:
-            alpha: Class weights (list or tensor). If None, all classes weighted equally.
+            alpha: Class weights. If None, all classes weighted equally.
             gamma: Focusing parameter. Higher gamma = more focus on hard examples.
             reduction: 'mean' or 'sum'
         """
@@ -173,35 +173,24 @@ class LabelSmoothingCrossEntropy(nn.Module):
         return loss.mean()
 
 
-def get_loss_function(loss_type, num_classes=None, class_weights=None, **kwargs):
+def get_loss_function(loss_type, class_weights=None, focal_gamma=2.0, label_smoothing=0.1):
     """
-    Factory function to get loss function by name.
-
-    Args:
-        loss_type: 'ce', 'weighted_ce', 'focal', or 'label_smoothing'
-        num_classes: Number of classes (unused, kept for API compatibility)
-        class_weights: Optional class weights for weighted CE or Focal Loss
-
-    Returns:
-        Loss function (nn.Module)
+    Returns a loss module based on loss_type.
+    Supported: 'ce', 'weighted_ce', 'focal', 'label_smoothing'
     """
     if loss_type == 'ce':
         return nn.CrossEntropyLoss()
 
     elif loss_type == 'weighted_ce':
-        if class_weights is None:
-            return nn.CrossEntropyLoss()
-        weights = torch.tensor(class_weights, dtype=torch.float32)
-        return nn.CrossEntropyLoss(weight=weights)
+        return nn.CrossEntropyLoss(
+            weight=torch.tensor(class_weights, dtype=torch.float32)
+        ) if class_weights is not None else nn.CrossEntropyLoss()
 
     elif loss_type == 'focal':
-        gamma = kwargs.get('focal_gamma', 2.0)
-        alpha = class_weights if class_weights is not None else None
-        return FocalLoss(alpha=alpha, gamma=gamma)
+        return FocalLoss(alpha=class_weights, gamma=focal_gamma)
 
     elif loss_type == 'label_smoothing':
-        smoothing = kwargs.get('label_smoothing', 0.1)
-        return LabelSmoothingCrossEntropy(smoothing=smoothing)
+        return LabelSmoothingCrossEntropy(smoothing=label_smoothing)
 
     else:
         raise ValueError(f"Unknown loss type: {loss_type}")
@@ -229,10 +218,6 @@ def compute_class_weights(train_df, label_type, num_classes):
     # Compute inverse frequency weights
     total_samples = len(train_df)
     class_weights = total_samples / (num_classes * class_counts)
-
-    print(f"\nClass distribution:")
-    for i, count in enumerate(class_counts):
-        print(f"  Class {i}: {int(count)} samples (weight: {class_weights[i]:.3f})")
 
     return class_weights.tolist()
 
@@ -314,21 +299,8 @@ def evaluate(model, dataloader, criterion, device):
 def train_single_config(config, train_loader, dev_loader, device, num_classes, class_weights=None):
     """
     Train model with a single hyperparameter configuration.
-
-    Args:
-        config: Dictionary with hyperparameters
-        train_loader: Training data loader
-        dev_loader: Validation data loader
-        device: Device to train on
-        num_classes: Number of classes
-        class_weights: Optional class weights for loss function
-
-    Returns:
-        Dictionary with results
     """
-    print(f"\n{'='*80}")
     print(f"Training with config: {config}")
-    print(f"{'='*80}")
 
     # Initialize model with pooling strategy
     model = EnhancedMultiModalClassifier(
@@ -342,7 +314,6 @@ def train_single_config(config, train_loader, dev_loader, device, num_classes, c
     # Get loss function
     criterion = get_loss_function(
         config['loss_type'],
-        num_classes,
         class_weights=class_weights,
         focal_gamma=config.get('focal_gamma', 2.0),
         label_smoothing=config.get('label_smoothing', 0.1)
@@ -356,13 +327,6 @@ def train_single_config(config, train_loader, dev_loader, device, num_classes, c
         lr=config['learning_rate'],
         weight_decay=config.get('weight_decay', 0.0)
     )
-
-    # Learning rate scheduler (optional)
-    scheduler = None
-    if config.get('use_scheduler', False):
-        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-            optimizer, mode='max', factor=0.5, patience=2, verbose=True
-        )
 
     # Training loop
     best_dev_acc = 0.0
@@ -380,21 +344,17 @@ def train_single_config(config, train_loader, dev_loader, device, num_classes, c
 
         # Train
         train_loss, train_acc = train_epoch(model, train_loader, criterion, optimizer, device)
-        print(f"  Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.2f}%")
+        print(f" Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.2f}%")
 
         # Evaluate
         dev_loss, dev_acc = evaluate(model, dev_loader, criterion, device)
-        print(f"  Dev Loss: {dev_loss:.4f}, Dev Acc: {dev_acc:.2f}%")
+        print(f" Dev Loss: {dev_loss:.4f}, Dev Acc: {dev_acc:.2f}%")
 
         # Record history
         history['train_loss'].append(train_loss)
         history['train_acc'].append(train_acc)
         history['dev_loss'].append(dev_loss)
         history['dev_acc'].append(dev_acc)
-
-        # Update learning rate scheduler
-        if scheduler is not None:
-            scheduler.step(dev_acc)
 
         # Track best model
         if dev_acc > best_dev_acc:
@@ -448,9 +408,7 @@ def grid_search(
     values = param_grid.values()
     combinations = [dict(zip(keys, v)) for v in product(*values)]
 
-    print(f"\n{'='*80}")
     print(f"GRID SEARCH: Testing {len(combinations)} configurations")
-    print(f"{'='*80}")
 
     all_results = []
     best_overall_acc = 0.0
@@ -461,86 +419,33 @@ def grid_search(
         for key, value in config.items():
             print(f"  {key}: {value}")
 
-        try:
-            results, model = train_single_config(
-                config, train_loader, dev_loader, device, num_classes, class_weights
-            )
-            all_results.append(results)
+        results, model = train_single_config(config, train_loader, dev_loader, device, num_classes, class_weights)
+        all_results.append(results)
 
-            # Track best model
-            if results['best_dev_acc'] > best_overall_acc:
-                best_overall_acc = results['best_dev_acc']
-                best_config = config
+        if results['best_dev_acc'] > best_overall_acc:
+            best_overall_acc = results['best_dev_acc']
+            best_config = config
+            best_model = model
 
-                # Save best model
-                torch.save({
-                    'config': config,
-                    'model_state_dict': model.state_dict(),
-                    'dev_acc': best_overall_acc,
-                }, save_path / 'best_model_grid_search.pth')
-                print(f"\n*** NEW BEST MODEL: {best_overall_acc:.2f}% ***")
-
-        except Exception as e:
-            print(f"[ERROR] Configuration failed: {e}")
-            results = {
+            # save best model
+            torch.save({
                 'config': config,
-                'error': str(e),
-                'best_dev_acc': 0.0
-            }
-            all_results.append(results)
+                'model_state_dict': model.state_dict(),
+                'dev_acc': best_overall_acc,
+            }, save_path / 'best_model_grid_search.pth')
 
     # Save all results
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    results_file = save_path / f'grid_search_results_{timestamp}.json'
+    results_file = save_path / f'grid_search_results.json'
 
     with open(results_file, 'w') as f:
         json.dump(all_results, f, indent=2)
 
-    print(f"\n{'='*80}")
-    print(f"GRID SEARCH COMPLETE")
-    print(f"{'='*80}")
-    print(f"Results saved to: {results_file}")
     print(f"\nBest Configuration:")
     for key, value in best_config.items():
-        print(f"  {key}: {value}")
+        print(f"{key}: {value}")
     print(f"Best Dev Accuracy: {best_overall_acc:.2f}%")
 
-    # Generate summary report
-    generate_summary_report(all_results, save_path / f'summary_{timestamp}.txt')
-
     return all_results, best_model, best_config
-
-
-def generate_summary_report(results, save_path):
-    """Generate a summary report of grid search results."""
-    # Sort by dev accuracy
-    sorted_results = sorted(results, key=lambda x: x.get('best_dev_acc', 0), reverse=True)
-
-    with open(save_path, 'w') as f:
-        f.write("="*80 + "\n")
-        f.write("GRID SEARCH SUMMARY REPORT\n")
-        f.write("="*80 + "\n\n")
-
-        f.write(f"Total configurations tested: {len(results)}\n")
-        f.write(f"Successful runs: {sum(1 for r in results if 'error' not in r)}\n")
-        f.write(f"Failed runs: {sum(1 for r in results if 'error' in r)}\n\n")
-
-        f.write("TOP 10 CONFIGURATIONS:\n")
-        f.write("-"*80 + "\n")
-
-        for i, result in enumerate(sorted_results[:10], 1):
-            if 'error' in result:
-                continue
-
-            f.write(f"\n#{i} - Dev Acc: {result['best_dev_acc']:.2f}%\n")
-            f.write(f"  Config:\n")
-            for key, value in result['config'].items():
-                f.write(f"    {key}: {value}\n")
-            f.write(f"  Best Epoch: {result['best_epoch']}\n")
-            f.write(f"  Final Train Acc: {result['final_train_acc']:.2f}%\n")
-            f.write(f"  Final Dev Acc: {result['final_dev_acc']:.2f}%\n")
-
-    print(f"\nSummary report saved to: {save_path}")
 
 
 # Main Function
@@ -552,15 +457,11 @@ def main(args):
     MAX_LENGTH = 128
     COMPUTE_CLASS_WEIGHTS = args.use_class_weights
 
-    # Get the base data directory (parent of Baseline directory)
     script_dir = Path(__file__).resolve().parent
     data_dir = script_dir.parent / 'Data'
 
-    # Device
     device = torch.device('cuda' if torch.cuda.is_available() and not args.force_cpu else 'cpu')
-    print(f"Using device: {device}")
     print(f"Label type: {LABEL_TYPE} ({NUM_CLASSES} classes)")
-    print(f"Class weights: {'Enabled' if COMPUTE_CLASS_WEIGHTS else 'Disabled'}")
 
     # Initialize tokenizer
     tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
@@ -573,15 +474,14 @@ def main(args):
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     ])
 
-    # Load and split dev into val/test (same as baseline model)
-    print("\nLoading and splitting datasets...")
+    # Load and split dev into val/test
     train_df = pd.read_csv(data_dir / 'train_sampled_with_images.csv')
     dev_df = pd.read_csv(data_dir / 'dev_sampled_with_images.csv')
 
     label_column = f'{LABEL_TYPE}_label'
     val_df, test_df = train_test_split(
         dev_df,
-        test_size=0.2,  # 20% for test, 80% for validation
+        test_size=0.2,
         random_state=42,
         stratify=dev_df[label_column]
     )
@@ -609,17 +509,13 @@ def main(args):
     if COMPUTE_CLASS_WEIGHTS:
         class_weights = compute_class_weights(train_df, LABEL_TYPE, NUM_CLASSES)
 
-    # Define Parameter Grid 
-
     # Configure loss functions based on classification type
     if LABEL_TYPE == '2_way':
         # For 2-way: weighted CrossEntropy and label smoothing
         loss_types = ['weighted_ce', 'label_smoothing']
-        print("\n[INFO] 2-way classification: Using Weighted CrossEntropy and Label Smoothing")
     else:
         # For 3-way and 6-way: focal loss and weighted CrossEntropy
         loss_types = ['weighted_ce', 'focal']
-        print(f"\n[INFO] {LABEL_TYPE} classification: Using Focal Loss and Weighted CrossEntropy")
 
     param_grid = {
         'loss_type': loss_types,
@@ -627,31 +523,20 @@ def main(args):
         'batch_size': [8, 16],
         'dropout': [0.3, 0.5],
         'pooling_strategy': ['max', 'mean'],
-        'hidden_dim': [512],  # MLP hidden dimension
-        'num_epochs': [10],  # Number of training epochs per configuration
-        'focal_gamma': [2.0],  # For focal loss
-        'label_smoothing': [0.1]  # For label smoothing
+        'hidden_dim': [512], 
+        'num_epochs': [10],  
+        'focal_gamma': [2.0],  
+        'label_smoothing': [0.1]
     }
 
-    print("\n" + "="*80)
-    print("PARAMETER GRID")
-    print("="*80)
     for key, values in param_grid.items():
         print(f"{key}: {values}")
 
     total_configs = np.prod([len(v) for v in param_grid.values()])
     print(f"\nTotal configurations to test: {total_configs}")
 
-    # Warning for large grid searches
-    if total_configs > 50:
-        print("\n[WARNING] Large number of configurations!")
-        print("Consider reducing the parameter grid or using random search.")
-        response = input("Continue? (y/n): ")
-        if response.lower() != 'y':
-            print("Exiting.")
-            return
-
-    # Run Grid Search
+    # Store original batch_size values
+    batch_sizes = param_grid.pop('batch_size')
 
     all_results = []
     best_overall_acc = 0.0
@@ -659,19 +544,9 @@ def main(args):
     save_path = Path('grid_search_results')
     save_path.mkdir(parents=True, exist_ok=True)
 
-    # Generate all combinations
-    keys = param_grid.keys()
-    values = param_grid.values()
-    combinations = [dict(zip(keys, v)) for v in product(*values)]
-
-    print(f"\n{'='*80}")
-    print(f"GRID SEARCH: Testing {len(combinations)} configurations")
-    print(f"{'='*80}")
-
-    for i, config in enumerate(combinations):
-        print(f"\n[{i+1}/{len(combinations)}] Testing configuration:")
-
-        # Create validation dataset with current config
+    # Iterate over each batch size and run grid search
+    for batch_size in batch_sizes:
+        # Create validation dataset
         val_dataset = MultiModalDataset(
             str(val_csv_path),
             str(data_dir / 'dev_images'),
@@ -684,7 +559,7 @@ def main(args):
         # Create dataloaders with current batch size
         train_loader = DataLoader(
             train_dataset,
-            batch_size=config['batch_size'],
+            batch_size=batch_size,
             shuffle=True,
             num_workers=2,
             pin_memory=True if torch.cuda.is_available() else False
@@ -692,60 +567,44 @@ def main(args):
 
         dev_loader = DataLoader(
             val_dataset,
-            batch_size=config['batch_size'],
+            batch_size=batch_size,
             shuffle=False,
             num_workers=2,
             pin_memory=True if torch.cuda.is_available() else False
         )
 
-        try:
-            results, model = train_single_config(
-                config, train_loader, dev_loader, device, NUM_CLASSES, class_weights
-            )
-            all_results.append(results)
+        # Add batch_size to param_grid temporarily
+        current_param_grid = {**param_grid, 'batch_size': [batch_size]}
 
-            # Track best model
-            if results['best_dev_acc'] > best_overall_acc:
-                best_overall_acc = results['best_dev_acc']
-                best_config = config
+        # Run grid search for this batch size
+        results, _, _ = grid_search(
+            current_param_grid,
+            train_loader,
+            dev_loader,
+            device,
+            NUM_CLASSES,
+            class_weights=class_weights,
+            save_dir='grid_search_results'
+        )
 
-                # Save best model
-                torch.save({
-                    'config': config,
-                    'model_state_dict': model.state_dict(),
-                    'dev_acc': best_overall_acc,
-                }, save_path / 'best_model_grid_search.pth')
-                print(f"\n*** NEW BEST MODEL: {best_overall_acc:.2f}% ***")
+        all_results.extend(results)
 
-        except Exception as e:
-            print(f"[ERROR] Configuration failed: {e}")
-            import traceback
-            traceback.print_exc()
-            results = {
-                'config': config,
-                'error': str(e),
-                'best_dev_acc': 0.0
-            }
-            all_results.append(results)
+        # Track overall best config across all batch sizes
+        for result in results:
+            if result.get('best_dev_acc', 0) > best_overall_acc:
+                best_overall_acc = result['best_dev_acc']
+                best_config = result['config']
 
-    # Save all results
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    results_file = save_path / f'grid_search_results_{timestamp}.json'
+    # Final summary
+    final_results_file = save_path / f'final_grid_search_results.json'
 
-    with open(results_file, 'w') as f:
+    with open(final_results_file, 'w') as f:
         json.dump(all_results, f, indent=2)
 
-    print(f"\n{'='*80}")
-    print(f"GRID SEARCH COMPLETE")
-    print(f"{'='*80}")
-    print(f"Results saved to: {results_file}")
-    print(f"\nBest Configuration:")
+    print(f"\nOverall Best Configuration:")
     for key, value in best_config.items():
         print(f"  {key}: {value}")
-    print(f"Best Dev Accuracy: {best_overall_acc:.2f}%")
-
-    # Generate summary report
-    generate_summary_report(all_results, save_path / f'summary_{timestamp}.txt')
+    print(f"Overall Best Dev Accuracy: {best_overall_acc:.2f}%")
 
 
 if __name__ == '__main__':
@@ -761,12 +620,6 @@ if __name__ == '__main__':
         default='2_way',
         choices=['2_way', '3_way', '6_way'],
         help='Classification type: 2_way, 3_way, or 6_way'
-    )
-    parser.add_argument(
-        '--epochs',
-        type=int,
-        default=10,
-        help='Number of training epochs for each configuration'
     )
     parser.add_argument(
         '--use-class-weights',
