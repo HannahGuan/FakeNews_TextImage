@@ -17,15 +17,11 @@ import json
 from pathlib import Path
 from itertools import product
 from datetime import datetime
-import ssl
-import certifi
 
 from baseline_model import MultiModalDataset
 from sklearn.model_selection import train_test_split
 from transformers import BertModel
 from torchvision import models
-
-ssl_context = ssl.create_default_context(cafile=certifi.where())
 
 
 # Enhanced Model with Pooling Strategy Support
@@ -34,30 +30,20 @@ class EnhancedMultiModalClassifier(nn.Module):
     """Enhanced model: BERT + ResNet-50 with configurable pooling strategies."""
 
     def __init__(self, num_classes: int = 2, hidden_dim: int = 512, dropout: float = 0.3, pooling_strategy: str = 'mean'):
-        """
-        Args:
-            num_classes: Number of output classes (2, 3, or 6)
-            hidden_dim: Hidden dimension for MLP
-            dropout: Dropout probability
-            pooling_strategy: 'mean', 'max', or 'cls' for text pooling
-        """
         super(EnhancedMultiModalClassifier, self).__init__()
         self.num_classes = num_classes
         self.pooling_strategy = pooling_strategy
 
         # text encoder: BERT
         self.bert = BertModel.from_pretrained('bert-base-uncased')
-        self.bert_dim = 768  # BERT base hidden size
+        self.bert_dim = 768 
 
         # image encoder: ResNet-50
-        try:
-            from torchvision.models import ResNet50_Weights
-            resnet = models.resnet50(weights=ResNet50_Weights.IMAGENET1K_V1)
-        except ImportError:
-            resnet = models.resnet50(pretrained=True)
+        from torchvision.models import ResNet50_Weights
+        resnet = models.resnet50(weights=ResNet50_Weights.IMAGENET1K_V2)
         # remove the final classification layer
         self.resnet = nn.Sequential(*list(resnet.children())[:-1])
-        self.resnet_dim = 2048  # ResNet-50 output dimension
+        self.resnet_dim = 2048  
 
         # freeze pretrained models initially
         for param in self.bert.parameters():
@@ -78,49 +64,36 @@ class EnhancedMultiModalClassifier(nn.Module):
         )
 
     def forward(self, input_ids, attention_mask, image):
-        """
-        Args:
-            input_ids: [batch_size, seq_len]
-            attention_mask: [batch_size, seq_len]
-            image: [batch_size, 3, 224, 224]
+        # Get BERT outputs -- this gives us token-level representations
+        bert_stuff = self.bert(input_ids=input_ids, attention_mask=attention_mask)
 
-        Returns:
-            logits: [batch_size, num_classes]
-        """
-        # extract text features with pooling strategy
-        bert_output = self.bert(input_ids=input_ids, attention_mask=attention_mask)
-
+        # Three pooling strategies
         if self.pooling_strategy == 'cls':
-            # Use CLS token (first token)
-            text_features = bert_output.last_hidden_state[:, 0, :]
+            text_vec = bert_stuff.last_hidden_state[:, 0, :]
+
         elif self.pooling_strategy == 'mean':
-            # Mean pooling over sequence
-            token_embeddings = bert_output.last_hidden_state
-            attention_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
-            sum_embeddings = torch.sum(token_embeddings * attention_mask_expanded, 1)
-            sum_mask = torch.clamp(attention_mask_expanded.sum(1), min=1e-9)
-            text_features = sum_embeddings / sum_mask
+            all_tokens = bert_stuff.last_hidden_state
+            attn_exp = attention_mask.unsqueeze(-1).expand(all_tokens.size()).float()
+            summed = torch.sum(all_tokens * attn_exp, dim=1)
+            summed_mask = torch.clamp(attn_exp.sum(1), min=1e-9) 
+            text_vec = summed / summed_mask
+
         elif self.pooling_strategy == 'max':
-            # Max pooling over sequence
-            token_embeddings = bert_output.last_hidden_state
-            attention_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
-            token_embeddings = token_embeddings.masked_fill(attention_mask_expanded == 0, -1e9)
-            text_features = torch.max(token_embeddings, dim=1)[0]
+            all_tokens = bert_stuff.last_hidden_state
+            attn_exp = attention_mask.unsqueeze(-1).expand(all_tokens.size()).float()
+            all_tokens = all_tokens.masked_fill(attn_exp == 0, -1e9)
+            text_vec = torch.max(all_tokens, dim=1)[0] 
         else:
-            raise ValueError(f"Unknown pooling strategy: {self.pooling_strategy}")
+            raise ValueError(f"Pooling strategy '{self.pooling_strategy}' is not recognized")
 
-        # extract image features (global average pooling)
-        image_features = self.resnet(image)
-        image_features = image_features.view(image_features.size(0), -1)
+        img_vec = self.resnet(image)
+        img_vec = img_vec.view(img_vec.size(0), -1)  # flatten to 2D
 
-        # concatenate features
-        combined_features = torch.cat([text_features, image_features], dim=1)
+        merged = torch.cat([text_vec, img_vec], dim=1)
 
-        # classification
-        logits = self.classifier(combined_features)
+        outputs = self.classifier(merged)
 
-        return logits
-
+        return outputs
 
 # Loss Functions
 
@@ -171,13 +144,11 @@ class LabelSmoothingCrossEntropy(nn.Module):
     Cross Entropy with Label Smoothing.
     Prevents overconfident predictions by smoothing hard labels.
 
-    Hard label: [0, 0, 1, 0]
-    Soft label (smoothing=0.1): [0.025, 0.025, 0.925, 0.025]
     """
     def __init__(self, smoothing=0.1):
         """
         Args:
-            smoothing: Label smoothing factor (0.0 = no smoothing, 0.1 is common)
+            smoothing: Label smoothing factor
         """
         super(LabelSmoothingCrossEntropy, self).__init__()
         self.smoothing = smoothing
@@ -192,7 +163,7 @@ class LabelSmoothingCrossEntropy(nn.Module):
         log_probs = F.log_softmax(inputs, dim=1)
         num_classes = inputs.size(1)
 
-        # Create smooth labels
+        # create smooth labels
         with torch.no_grad():
             true_dist = torch.zeros_like(log_probs)
             true_dist.fill_(self.smoothing / (num_classes - 1))
@@ -210,18 +181,15 @@ def get_loss_function(loss_type, num_classes=None, class_weights=None, **kwargs)
         loss_type: 'ce', 'weighted_ce', 'focal', or 'label_smoothing'
         num_classes: Number of classes (unused, kept for API compatibility)
         class_weights: Optional class weights for weighted CE or Focal Loss
-        **kwargs: Additional arguments for specific loss functions
 
     Returns:
         Loss function (nn.Module)
     """
-    _ = num_classes  # Unused, kept for API compatibility
     if loss_type == 'ce':
         return nn.CrossEntropyLoss()
 
     elif loss_type == 'weighted_ce':
         if class_weights is None:
-            print("[WARNING] Weighted CE requested but no class weights provided. Using standard CE.")
             return nn.CrossEntropyLoss()
         weights = torch.tensor(class_weights, dtype=torch.float32)
         return nn.CrossEntropyLoss(weight=weights)
