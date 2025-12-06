@@ -57,7 +57,7 @@ Baseline model implementation using traditional multimodal approaches:
 - `evaluation_results/`: Model performance results and metrics
 - `grid_search_results/`: Hyperparameter tuning results
 - `logs/`: Training logs and TensorBoard files
-- Detailed documentation in `README_BASELINE.md` and `README_finetune_model.md`
+- Detailed documentation in `README_BASELINE.md`
 
 ### [BLIP_Model_v2/](BLIP_Model_v2/)
 BLIP-2 Vision-Language Model implementation:
