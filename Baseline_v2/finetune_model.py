@@ -16,7 +16,6 @@ from tqdm import tqdm
 import json
 from pathlib import Path
 from itertools import product
-from datetime import datetime
 
 from baseline_model import MultiModalDataset
 from sklearn.model_selection import train_test_split
