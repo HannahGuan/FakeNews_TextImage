@@ -54,9 +54,9 @@ class ModelEvaluator:
         if self.classification_type == "2_way":
             return ["Real", "Fake"]
         elif self.classification_type == "3_way":
-            return ["Fake", "Satire", "Real"]
+            return ["Real", "Fake (True Text)", "Fake (False Text)"]
         elif self.classification_type == "6_way":
-            return ["Fake", "Satire/Parody", "Misleading", "Imposter", "False Connection", "Manipulated"]
+            return ["Real", "Satire/Parody", "Misleading", "Imposter", "False Connection", "Manipulated"]
         else:
             return [f"Class {i}" for i in range(self.num_classes)]
 
